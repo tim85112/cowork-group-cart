@@ -1,0 +1,105 @@
+import { useState } from 'react';
+import { nanoid } from 'nanoid';
+import { useGroupStore } from '@/store/useGroupStore';
+import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
+import { env } from '@/lib/env';
+import type { GroupRow } from '@/types/db';
+
+export function CreateGroup() {
+  const profile = useGroupStore((s) => s.profile);
+  const setGroup = useGroupStore((s) => s.setGroup);
+  const setScreen = useGroupStore((s) => s.setScreen);
+  const setError = useGroupStore((s) => s.setError);
+  const setLoading = useGroupStore((s) => s.setLoading);
+  const loading = useGroupStore((s) => s.loading);
+
+  const [name, setName] = useState(profile?.displayName ?? '');
+  const [phone, setPhone] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profile) return;
+    if (!name.trim() || !phone.trim()) {
+      setError('請填寫姓名與電話');
+      return;
+    }
+    if (!/^\d{8,12}$/.test(phone.replace(/\D/g, ''))) {
+      setError('電話格式不正確');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const groupId = nanoid(10);
+      const row: Partial<GroupRow> = {
+        id: groupId,
+        building_id: env.buildingId,
+        owner_user_id: profile.userId,
+        owner_name: name.trim(),
+        owner_phone: phone.trim(),
+        status: 'open'
+      };
+      const { data, error } = await supabase.from('groups').insert(row).select().single();
+      if (error) throw error;
+
+      await api.notifyGroupCreated({
+        group_id: groupId,
+        owner_name: name.trim(),
+        owner_phone: phone.trim(),
+        owner_user_id: profile.userId
+      });
+
+      setGroup(data as GroupRow);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('mode');
+      url.searchParams.set('groupId', groupId);
+      window.history.replaceState({}, '', url.toString());
+      setScreen('share');
+    } catch (err) {
+      setError((err as Error).message || '建立揪團失敗');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-full bg-cream">
+      <div className="px-4 pt-6 pb-24">
+        <div className="card p-6 mt-4">
+          <h2 className="text-xl font-bold mb-1">開啟團體購物車</h2>
+          <p className="text-sm text-gray-500 mb-6">填寫資訊，建立揪團讓同事一起點餐</p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block">
+              <span className="text-sm font-bold">揪團者姓名</span>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field mt-1"
+                placeholder="您的稱呼"
+                required
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold">聯絡電話</span>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="input-field mt-1"
+                placeholder="0912345678"
+                inputMode="tel"
+                required
+              />
+            </label>
+            <div className="bg-cream rounded-xl px-3 py-2 text-sm text-gray-600">
+              <p>截單時間：<b>24 小時</b>（顯示用，由您手動收單結束）</p>
+            </div>
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? '建立中…' : '開始揪團'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

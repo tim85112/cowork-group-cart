@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #c94625;
+  --color-accent: #fdc939;
+  --color-cream: #fde8c8;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white rounded-2xl px-4 py-3 font-bold shadow-md
+           active:scale-[0.98] transition disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-ghost {
+    @apply rounded-2xl px-4 py-3 font-semibold border-2 border-primary text-primary
+           active:scale-[0.98] transition;
+  }
+  .input-field {
+    @apply w-full rounded-xl border-2 border-cream bg-white px-4 py-3 text-base
+           outline-none focus:border-primary focus:bg-white;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm;
+  }
+}
