@@ -9,9 +9,43 @@ export interface Profile {
 
 let initPromise: Promise<void> | null = null;
 
+const RECOVERY_FLAG = 'liff_token_recovered';
+
+function clearLiffAuthStorage() {
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('LIFF_STORE'))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {}
+}
+
+export function recoverFromAuthError(): void {
+  clearLiffAuthStorage();
+  try {
+    sessionStorage.removeItem(RECOVERY_FLAG);
+  } catch {}
+  window.location.reload();
+}
+
 export function initLiff(): Promise<void> {
   if (!initPromise) {
-    initPromise = liff.init({ liffId: env.liffId });
+    initPromise = liff.init({ liffId: env.liffId }).catch((err) => {
+      const msg = String((err && (err.message ?? err.code)) || err || '');
+      const isAuthError = /revoke|expired|invalid.*token|unauthor/i.test(msg);
+      const alreadyRecovered =
+        (() => {
+          try { return !!sessionStorage.getItem(RECOVERY_FLAG); } catch { return false; }
+        })();
+
+      if (isAuthError && !alreadyRecovered) {
+        try { sessionStorage.setItem(RECOVERY_FLAG, '1'); } catch {}
+        clearLiffAuthStorage();
+        window.location.reload();
+        return new Promise<void>(() => {}); // hang until reload
+      }
+
+      throw err;
+    });
   }
   return initPromise;
 }
