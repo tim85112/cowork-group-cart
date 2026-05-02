@@ -7,6 +7,7 @@ import { QRCodeBlock } from '@/components/QRCodeBlock';
 export function ShareGroup() {
   const group = useGroupStore((s) => s.group);
   const setScreen = useGroupStore((s) => s.setScreen);
+  const setError = useGroupStore((s) => s.setError);
   const [copied, setCopied] = useState(false);
 
   if (!group) return null;
@@ -15,9 +16,10 @@ export function ShareGroup() {
   async function handleLineShare() {
     if (!group) return;
     try {
-      await shareGroupLink(group.owner_name, shareUrl);
-    } catch {
-      // 使用者取消或不可用
+      const ok = await shareGroupLink(group.owner_name, shareUrl);
+      if (!ok) setError('LINE 分享功能未啟用，請改用「複製連結」');
+    } catch (e) {
+      setError((e as Error).message || 'LINE 分享失敗');
     }
   }
 

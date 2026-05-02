@@ -24,8 +24,8 @@ export function CreateGroup() {
       setError('請填寫姓名與電話');
       return;
     }
-    if (!/^\d{8,12}$/.test(phone.replace(/\D/g, ''))) {
-      setError('電話格式不正確');
+    if (!/^09\d{8}$/.test(phone.replace(/\D/g, ''))) {
+      setError('電話格式不正確（請輸入 09 開頭的 10 位手機號碼）');
       return;
     }
     setError(null);
