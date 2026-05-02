@@ -4,7 +4,6 @@ import { useProducts } from '@/hooks/useProducts';
 import { useRealtimeCart } from '@/hooks/useRealtimeCart';
 import { useCountdown } from '@/hooks/useCountdown';
 import { env } from '@/lib/env';
-import { shareGroupLink } from '@/lib/liff';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { SearchBar } from '@/components/SearchBar';
@@ -21,8 +20,6 @@ export function Menu() {
   const isHost = useGroupStore(selectIsHost);
   const total = useGroupStore(selectGroupTotal);
   const setScreen = useGroupStore((s) => s.setScreen);
-  const setError = useGroupStore((s) => s.setError);
-  const [shareCopied, setShareCopied] = useState(false);
 
   useRealtimeCart(group?.id ?? null);
   const { products, loading, error, reload } = useProducts(env.buildingId);
@@ -48,25 +45,6 @@ export function Menu() {
   function handleCloseGroup() {
     setShowCart(false);
     setShowConfirm(true);
-  }
-
-  async function handleShare() {
-    if (!group) return;
-    const shareUrl = `${env.endpointUrl}/?groupId=${group.id}`;
-    try {
-      const ok = await shareGroupLink(group.owner_name, shareUrl);
-      if (ok) return;
-    } catch (e) {
-      setError((e as Error).message || 'LINE 分享失敗');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setShareCopied(true);
-      window.setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      setError('LINE 分享未啟用，且複製連結失敗');
-    }
   }
 
   function handleConfirmCloseGroup() {
@@ -112,12 +90,12 @@ export function Menu() {
 
       {group?.status === 'open' && (
         <button
-          onClick={handleShare}
+          onClick={() => setScreen('share')}
           className="fixed bottom-24 right-4 bg-accent text-primary font-bold rounded-full shadow-lg w-14 h-14 flex flex-col items-center justify-center active:scale-95 z-40"
           aria-label="分享揪團連結"
         >
           <span className="text-lg leading-none">👥</span>
-          <span className="text-[11px] leading-tight mt-0.5">{shareCopied ? '已複製' : '分享'}</span>
+          <span className="text-[11px] leading-tight mt-0.5">分享</span>
         </button>
       )}
 
