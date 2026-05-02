@@ -15,6 +15,7 @@ export function ReviewClose() {
   const setError = useGroupStore((s) => s.setError);
   const setGroup = useGroupStore((s) => s.setGroup);
   const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
 
   if (!group) return null;
 
@@ -62,12 +63,33 @@ export function ReviewClose() {
         .single();
       if (error) throw error;
       setGroup(data);
-
-      await closeWindow();
+      setDone(true);
     } catch (e) {
       setError((e as Error).message || '確認訂單失敗');
       setSubmitting(false);
     }
+  }
+
+  if (done) {
+    return (
+      <div className="min-h-full bg-cream flex items-center justify-center px-6">
+        <div className="card p-6 text-center max-w-sm w-full">
+          <div className="text-5xl mb-3">✅</div>
+          <h2 className="text-xl font-bold mb-2">揪團已收單！</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            總計 <span className="font-bold text-primary">{formatNTD(total)}</span>
+          </p>
+          <div className="bg-cream rounded-xl p-4 text-left text-sm text-gray-700 mb-4">
+            <p className="font-bold mb-1">📋 查看完整訂單摘要：</p>
+            <p>請回 LINE 聊天室，點圖文選單<br />
+              <span className="font-bold text-primary">「我的揪團訂單」</span>按鈕。</p>
+          </div>
+          <button onClick={() => closeWindow()} className="btn-primary w-full">
+            關閉視窗
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
