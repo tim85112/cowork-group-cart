@@ -37,7 +37,8 @@ export const api = {
     return postJson<{ ok: boolean }>('group-cart/created', payload);
   },
   notifyGroupConfirmed(payload: ConfirmGroupPayload) {
-    return postJson<{ ok: boolean }>('group-cart/confirmed', payload);
+    const liff_url = `https://liff.line.me/${env.liffId}?groupId=${payload.group_id}`;
+    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url });
   },
   async fetchProducts(buildingId: string): Promise<Product[]> {
     const url = `${env.n8nBase}/webhook/group-cart/products?building=${encodeURIComponent(buildingId)}`;
