@@ -20,6 +20,19 @@ interface ConfirmGroupPayload {
     subtotal: number;
     items: Array<{ food_name: string; quantity: number; price: number; spec?: string }>;
   }>;
+  cart_items: Array<{
+    food_name: string;
+    spec1: string | null;
+    spec2: string | null;
+    quantity: number;
+    unit_price: number;
+    product_url: string | null;
+    user_name: string;
+  }>;
+  recipient: {
+    name: string;
+    phone: string;
+  };
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {

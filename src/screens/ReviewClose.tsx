@@ -47,11 +47,26 @@ export function ReviewClose() {
         }))
       }));
 
+      const cart_items = items.map((i) => ({
+        food_name: i.food_name,
+        spec1: i.spec1,
+        spec2: i.spec2,
+        quantity: i.quantity,
+        unit_price: i.unit_price,
+        product_url: i.product_url,
+        user_name: i.user_name
+      }));
+
       await api.notifyGroupConfirmed({
         group_id: group.id,
         owner_user_id: group.owner_user_id,
         total_amount: total,
-        order_summary
+        order_summary,
+        cart_items,
+        recipient: {
+          name: group.owner_name,
+          phone: group.owner_phone
+        }
       });
 
       const { data, error } = await supabase
