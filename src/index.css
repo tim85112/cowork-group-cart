@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Calligraphy';
+  src: url('/Calligraphy.ttf') format('truetype');
+  font-display: swap;
+}
+
 :root {
   --color-primary: #c94625;
   --color-accent: #fdc939;
