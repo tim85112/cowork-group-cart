@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Calligraphy';
-  src: url('/Calligraphy.ttf') format('truetype');
+  font-family: 'KaiU';
+  src: url('/KaiU.ttf') format('truetype');
   font-display: swap;
 }
 
