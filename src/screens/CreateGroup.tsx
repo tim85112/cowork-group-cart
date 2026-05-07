@@ -69,8 +69,9 @@ export function CreateGroup() {
     <div className="min-h-full bg-cream">
       <div className="px-4 pt-6 pb-24">
         <div className="card p-6 mt-4">
+          <img src="https://i.meee.com.tw/TxIzl4T.png" className="h-10 mb-4" />
           <h2 className="text-xl font-bold mb-1">開啟團體購物車</h2>
-          <p className="text-sm text-gray-500 mb-6">填寫資訊，建立揪團讓同事一起點餐</p>
+          <p className="text-sm text-gray-500 mb-6">輕鬆揪團，每天省下 30 分鐘的訂餐時間！</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
               <span className="text-sm font-bold">揪團者姓名</span>
@@ -95,7 +96,7 @@ export function CreateGroup() {
             </label>
             <label className="block">
               <span className="text-sm font-bold">公司統編</span>
-              <span className="text-xs text-gray-400 ml-1">（選填）</span>
+              <span className="text-xs text-gray-400 ml-1">非必填</span>
               <input
                 value={taxId}
                 onChange={(e) => setTaxId(e.target.value)}
@@ -105,9 +106,6 @@ export function CreateGroup() {
                 maxLength={8}
               />
             </label>
-            <div className="bg-cream rounded-xl px-3 py-2 text-sm text-gray-600">
-              <p>截單時間：<b>24 小時</b>（顯示用，由您手動收單結束）</p>
-            </div>
             <button type="submit" className="btn-primary w-full" disabled={loading}>
               {loading ? '建立中…' : '開始揪團'}
             </button>
