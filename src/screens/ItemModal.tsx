@@ -24,7 +24,14 @@ export function ItemModal({ product, onClose }: Props) {
   const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  const total = product.price * qty;
+  function specAddonPrice(spec: string): number {
+    const m = spec.match(/\(\+(\d+)\)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  const addon = specAddonPrice(spec1) + specAddonPrice(spec2);
+  const unitPrice = product.price + addon;
+  const total = unitPrice * qty;
 
   async function handleAdd() {
     if (!profile || !group) return;
@@ -42,7 +49,7 @@ export function ItemModal({ product, onClose }: Props) {
         spec1: spec1 || null,
         spec2: spec2 || null,
         quantity: qty,
-        unit_price: product.price,
+        unit_price: unitPrice,
         product_url: product.product_url || null
       });
       if (error) throw error;
@@ -77,7 +84,7 @@ export function ItemModal({ product, onClose }: Props) {
                 <p className="text-sm text-gray-500 mt-1">{product.description}</p>
               )}
             </div>
-            <p className="text-primary font-bold whitespace-nowrap">{formatNTD(product.price)}</p>
+            <p className="text-primary font-bold whitespace-nowrap">{formatNTD(unitPrice)}</p>
           </div>
 
           <div className="mt-5 space-y-4">

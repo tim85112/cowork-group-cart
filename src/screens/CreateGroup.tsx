@@ -69,7 +69,12 @@ export function CreateGroup() {
     <div className="min-h-full bg-cream">
       <div className="px-4 pt-6 pb-24">
         <div className="card p-6 mt-4">
-          <img src="https://i.meee.com.tw/TxIzl4T.png" className="h-10 mb-4" />
+          <div className="flex flex-col items-center mb-5">
+            <img src="https://i.meee.com.tw/TxIzl4T.png" className="w-28 h-28 object-contain" />
+            <p style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: '1.6rem', letterSpacing: '0.15em', color: '#3a1a00' }}>
+              商辦駝獸
+            </p>
+          </div>
           <h2 className="text-xl font-bold mb-1">開啟團體購物車</h2>
           <p className="text-sm text-gray-500 mb-6">輕鬆揪團，每天省下 30 分鐘的訂餐時間！</p>
           <form onSubmit={handleSubmit} className="space-y-4">
