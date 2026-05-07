@@ -6,6 +6,7 @@ export interface GroupRow {
   owner_user_id: string;
   owner_name: string;
   owner_phone: string;
+  tax_id: string | null;
   status: GroupStatus;
   created_at: string;
   closed_at: string | null;

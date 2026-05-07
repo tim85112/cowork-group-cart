@@ -65,7 +65,8 @@ export function ReviewClose() {
         cart_items,
         recipient: {
           name: group.owner_name,
-          phone: group.owner_phone
+          phone: group.owner_phone,
+          tax_id: group.tax_id ?? null
         }
       });
 

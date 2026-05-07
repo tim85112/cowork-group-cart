@@ -16,6 +16,7 @@ export function CreateGroup() {
 
   const [name, setName] = useState(profile?.displayName ?? '');
   const [phone, setPhone] = useState('');
+  const [taxId, setTaxId] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +39,7 @@ export function CreateGroup() {
         owner_user_id: profile.userId,
         owner_name: name.trim(),
         owner_phone: phone.trim(),
+        tax_id: taxId.trim() || null,
         status: 'open'
       };
       const { data, error } = await supabase.from('groups').insert(row).select().single();
@@ -89,6 +91,18 @@ export function CreateGroup() {
                 placeholder="0912345678"
                 inputMode="tel"
                 required
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold">公司統編</span>
+              <span className="text-xs text-gray-400 ml-1">（選填）</span>
+              <input
+                value={taxId}
+                onChange={(e) => setTaxId(e.target.value)}
+                className="input-field mt-1"
+                placeholder="8碼統一編號"
+                inputMode="numeric"
+                maxLength={8}
               />
             </label>
             <div className="bg-cream rounded-xl px-3 py-2 text-sm text-gray-600">

@@ -7,6 +7,7 @@ create table if not exists groups (
   owner_user_id text not null,
   owner_name    text not null,
   owner_phone   text not null,
+  tax_id        text,
   status        text not null default 'open'
                 check (status in ('open','closed','cancelled')),
   created_at    timestamptz not null default now(),

@@ -32,6 +32,7 @@ interface ConfirmGroupPayload {
   recipient: {
     name: string;
     phone: string;
+    tax_id?: string | null;
   };
 }
 
