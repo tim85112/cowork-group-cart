@@ -68,6 +68,12 @@ export async function shareGroupLink(ownerName: string, shareUrl: string): Promi
   return !!res;
 }
 
+export async function sendOrderTrigger(groupId: string): Promise<void> {
+  await initLiff();
+  if (!liff.isInClient()) return;
+  await liff.sendMessages([{ type: 'text', text: `GROUP_CONFIRMED:${groupId}` }]);
+}
+
 export async function closeWindow(): Promise<void> {
   await initLiff();
   liff.closeWindow();

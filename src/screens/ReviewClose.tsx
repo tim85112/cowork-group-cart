@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGroupStore, selectGroupTotal } from '@/store/useGroupStore';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
-import { closeWindow } from '@/lib/liff';
+import { closeWindow, sendOrderTrigger } from '@/lib/liff';
 import { MemberSection } from '@/components/MemberSection';
 import { formatNTD } from '@/lib/format';
 import type { CartItemRow } from '@/types/db';
@@ -57,6 +57,17 @@ export function ReviewClose() {
         user_name: i.user_name
       }));
 
+      // 先關閉群組，確保 n8n reply 查 Supabase 時資料已存在
+      const { data, error } = await supabase
+        .from('groups')
+        .update({ status: 'closed', closed_at: new Date().toISOString(), total_amount: total })
+        .eq('id', group.id)
+        .select()
+        .single();
+      if (error) throw error;
+      setGroup(data);
+
+      // 觸發 Playwright 自動結帳（n8n 不再 push 訂單確認訊息）
       await api.notifyGroupConfirmed({
         group_id: group.id,
         owner_user_id: group.owner_user_id,
@@ -70,14 +81,8 @@ export function ReviewClose() {
         }
       });
 
-      const { data, error } = await supabase
-        .from('groups')
-        .update({ status: 'closed', closed_at: new Date().toISOString(), total_amount: total })
-        .eq('id', group.id)
-        .select()
-        .single();
-      if (error) throw error;
-      setGroup(data);
+      // 消費者自己觸發 LINE 訊息 → n8n 用 replyToken 回覆，不消耗推播額度
+      await sendOrderTrigger(group.id);
 
       await closeWindow();
     } catch (e) {
