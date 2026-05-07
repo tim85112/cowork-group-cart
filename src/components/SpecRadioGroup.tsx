@@ -31,10 +31,20 @@ export function SpecRadioGroup({ label, options, value, onChange }: Props) {
   );
 }
 
+export function parseSpecLabel(specStr: string): string | null {
+  if (!specStr) return null;
+  const first = specStr.split(/[、,，;；/]/)[0].trim();
+  return first.includes('：') ? first.split('：')[0] : null;
+}
+
 export function parseSpecOptions(specStr: string): string[] {
   if (!specStr || specStr.trim() === '無' || specStr.trim() === '') return [];
   return specStr
     .split(/[、,，;；/]/)
-    .map((s) => s.trim())
+    .map((s) => {
+      const t = s.trim();
+      // 剝掉類別前綴：「麵體：直麵(+0)」→「直麵(+0)」
+      return t.includes('：') ? t.split('：', 2)[1] : t;
+    })
     .filter(Boolean);
 }

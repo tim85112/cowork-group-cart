@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useGroupStore } from '@/store/useGroupStore';
 import { QtyStepper } from '@/components/QtyStepper';
-import { SpecRadioGroup, parseSpecOptions } from '@/components/SpecRadioGroup';
+import { SpecRadioGroup, parseSpecOptions, parseSpecLabel } from '@/components/SpecRadioGroup';
 import { formatNTD } from '@/lib/format';
 import type { Product } from '@/types/product';
 
@@ -18,6 +18,8 @@ export function ItemModal({ product, onClose }: Props) {
 
   const opts1 = parseSpecOptions(product.spec1);
   const opts2 = parseSpecOptions(product.spec2);
+  const label1 = parseSpecLabel(product.spec1) ?? '規格一';
+  const label2 = parseSpecLabel(product.spec2) ?? '規格二';
 
   const [spec1, setSpec1] = useState(opts1[0] ?? '');
   const [spec2, setSpec2] = useState(opts2[0] ?? '');
@@ -89,10 +91,10 @@ export function ItemModal({ product, onClose }: Props) {
 
           <div className="mt-5 space-y-4">
             {opts1.length > 0 && (
-              <SpecRadioGroup label="規格一" options={opts1} value={spec1} onChange={setSpec1} />
+              <SpecRadioGroup label={label1} options={opts1} value={spec1} onChange={setSpec1} />
             )}
             {opts2.length > 0 && (
-              <SpecRadioGroup label="規格二" options={opts2} value={spec2} onChange={setSpec2} />
+              <SpecRadioGroup label={label2} options={opts2} value={spec2} onChange={setSpec2} />
             )}
             <div className="flex items-center justify-between">
               <span className="font-bold text-sm">數量</span>
