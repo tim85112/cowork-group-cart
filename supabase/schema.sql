@@ -12,7 +12,8 @@ create table if not exists groups (
                 check (status in ('open','closed','cancelled')),
   created_at    timestamptz not null default now(),
   closed_at     timestamptz,
-  total_amount  integer
+  total_amount  integer,
+  pickup_number integer        -- 每棟每日流水號，由 get_next_pickup_number RPC 分配
 );
 create index if not exists groups_status_created_idx on groups (status, created_at desc);
 
@@ -57,3 +58,50 @@ create policy items_insert on cart_items for insert with check (
 create policy items_delete on cart_items for delete using (
   exists (select 1 from groups g where g.id = group_id and g.status = 'open')
 );
+
+-- ============================================================
+-- 每棟每日流水號（daily_counters）
+-- ============================================================
+create table if not exists daily_counters (
+  building_id  text    not null,
+  session_date text    not null,  -- YYYY-MM-DD；11:30 前算前一天
+  last_number  integer not null default 0,
+  primary key (building_id, session_date)
+);
+
+-- get_next_pickup_number: 遞增並回傳下一個流水號（LIFF ReviewClose 呼叫）
+create or replace function get_next_pickup_number(
+  p_building_id text,
+  p_session_date text
+) returns integer as $$
+declare
+  v_next integer;
+begin
+  insert into daily_counters (building_id, session_date, last_number)
+  values (p_building_id, p_session_date, 1)
+  on conflict (building_id, session_date)
+  do update set last_number = daily_counters.last_number + 1
+  returning last_number into v_next;
+  return v_next;
+end;
+$$ language plpgsql security definer;
+
+-- rollback_pickup_number: 代填失敗時回滾最後一個號碼（n8n payment-ready 呼叫）
+-- 保護條件：AND last_number = p_pickup_number → 只回滾最後分配的號，防止 race / 重複呼叫
+create or replace function rollback_pickup_number(
+  p_building_id   text,
+  p_session_date  text,
+  p_pickup_number integer
+) returns void as $$
+begin
+  update daily_counters
+  set last_number = last_number - 1
+  where building_id  = p_building_id
+    and session_date = p_session_date
+    and last_number  = p_pickup_number
+    and last_number  > 0;
+end;
+$$ language plpgsql security definer;
+
+grant execute on function get_next_pickup_number(text, text)          to anon, authenticated;
+grant execute on function rollback_pickup_number(text, text, integer) to anon, authenticated;
