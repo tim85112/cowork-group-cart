@@ -64,7 +64,7 @@ create policy items_delete on cart_items for delete using (
 -- ============================================================
 create table if not exists daily_counters (
   building_id  text    not null,
-  session_date text    not null,  -- YYYY-MM-DD；11:30 前算前一天
+  session_date date    not null,  -- 11:30 前算前一天；型別 DATE（非 TEXT）
   last_number  integer not null default 0,
   primary key (building_id, session_date)
 );
@@ -97,7 +97,7 @@ begin
   update daily_counters
   set last_number = last_number - 1
   where building_id  = p_building_id
-    and session_date = p_session_date
+    and session_date = p_session_date::date  -- TEXT 參數轉型 DATE
     and last_number  = p_pickup_number
     and last_number  > 0;
 end;
