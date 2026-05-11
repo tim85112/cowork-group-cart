@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import type { GroupRow, CartItemRow, SoloCartItem } from '@/types/db';
 import type { Profile } from '@/lib/liff';
 
-export type Screen = 'create' | 'share' | 'menu' | 'review' | 'solo-checkout';
+export type Screen = 'create' | 'share' | 'menu' | 'review' | 'solo-checkout' | 'upsell';
 
 interface GroupState {
   profile: Profile | null;

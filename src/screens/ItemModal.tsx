@@ -3,29 +3,15 @@ import { supabase } from '@/lib/supabase';
 import { useGroupStore } from '@/store/useGroupStore';
 import { QtyStepper } from '@/components/QtyStepper';
 import { SpecRadioGroup, parseSpecOptions, parseSpecLabel } from '@/components/SpecRadioGroup';
-import { UpsellSection } from '@/components/UpsellSection';
 import { formatNTD } from '@/lib/format';
 import type { Product } from '@/types/product';
 
 interface Props {
   product: Product;
-  products?: Product[];        // 給 UpsellSection 用（solo 模式）
   onClose: () => void;
-  onSwitchProduct?: (p: Product) => void;
-  isStacked?: boolean;         // 是否為堆疊起來的加購 modal
-  previousProduct?: Product;   // 前一個商品（用於返回按鈕）
-  onBack?: () => void;         // 返回上一個商品
 }
 
-export function ItemModal({
-  product,
-  products,
-  onClose,
-  onSwitchProduct,
-  isStacked,
-  previousProduct,
-  onBack
-}: Props) {
+export function ItemModal({ product, onClose }: Props) {
   const profile = useGroupStore((s) => s.profile);
   const group = useGroupStore((s) => s.group);
   const soloMode = useGroupStore((s) => s.soloMode);
@@ -95,7 +81,7 @@ export function ItemModal({
     }
   }
 
-  // 商品名稱 + 餐廳 + 描述 + 單價 的區塊（兩種 layout 共用）
+  // 商品名稱 + 餐廳 + 描述 + 單價 區塊
   const titleBlock = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
@@ -123,16 +109,6 @@ export function ItemModal({
             onError={(e) => ((e.currentTarget.style.display = 'none'))}
           />
         )}
-        {isStacked && previousProduct && onBack && (
-          <button
-            onClick={onBack}
-            className="sticky top-0 z-10 w-full flex items-center gap-1.5 bg-cream/95 backdrop-blur px-4 py-2 text-sm text-primary font-bold border-b border-cream active:bg-cream"
-            type="button"
-          >
-            <span className="text-base leading-none">‹</span>
-            <span className="truncate">返回「{previousProduct.food_name}」</span>
-          </button>
-        )}
         <div className="p-5">
           {/* 有圖片：標題在上方（緊接圖片） */}
           {hasImage && titleBlock}
@@ -150,20 +126,11 @@ export function ItemModal({
             </div>
           </div>
 
-          {/* 無圖片：標題移到規格 / 數量「下方」（在加購區與按鈕之間） */}
+          {/* 無圖片：標題移到規格 / 數量下方 */}
           {!hasImage && (
             <div className="mt-5 pt-4 border-t border-cream">
               {titleBlock}
             </div>
-          )}
-
-          {/* 加購區塊：只在「最外層原始商品」顯示，疊加上來的 modal 不再顯示，避免無限套疊 */}
-          {soloMode && products && !isStacked && (
-            <UpsellSection
-              products={products}
-              excludeFoodName={product.food_name}
-              onTapProduct={(p) => onSwitchProduct?.(p)}
-            />
           )}
 
           <div className="mt-6 flex gap-2">

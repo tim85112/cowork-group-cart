@@ -41,27 +41,10 @@ export function Menu() {
 
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [search, setSearch] = useState('');
-  // 商品 modal 用堆疊管理：最後一個是當前顯示的，前一個是「返回上一個」用
-  const [productStack, setProductStack] = useState<Product[]>([]);
-  const currentProduct = productStack[productStack.length - 1];
-  const previousProduct =
-    productStack.length >= 2 ? productStack[productStack.length - 2] : undefined;
+  const [tappedProduct, setTappedProduct] = useState<Product | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showGroupStart, setShowGroupStart] = useState(false);
-
-  function openProduct(p: Product) {
-    setProductStack([p]);
-  }
-  function pushProduct(p: Product) {
-    setProductStack((stack) => [...stack, p]);
-  }
-  function popProduct() {
-    setProductStack((stack) => stack.slice(0, -1));
-  }
-  function clearProductStack() {
-    setProductStack([]);
-  }
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -91,6 +74,12 @@ export function Menu() {
     setScreen('create');
   }
 
+  // 個人散單：確認訂單一律先進 UpsellScreen，再到 solo-checkout
+  function handleSoloCheckout() {
+    setShowCart(false);
+    setScreen('upsell');
+  }
+
   // 顯示用：solo 模式用 soloItems / soloTotal；group 模式用既有
   const displayCount = soloMode ? soloCount : items.length;
   const displayTotal = soloMode ? soloTotal : groupTotal;
@@ -104,7 +93,7 @@ export function Menu() {
         showCloseButton={!soloMode && isHost && group?.status === 'open'}
         onCloseGroup={handleCloseGroup}
       />
-      <HotItemsSection hotItems={hotItems} products={products} onTap={openProduct} />
+      <HotItemsSection hotItems={hotItems} products={products} onTap={setTappedProduct} />
       <CategoryTabs active={activeCat} onChange={setActiveCat} />
       <SearchBar value={search} onChange={setSearch} />
 
@@ -120,7 +109,7 @@ export function Menu() {
           <div className="text-center text-gray-400 py-8">沒有符合的餐點</div>
         )}
         {filtered.map((p) => (
-          <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={openProduct} />
+          <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={setTappedProduct} />
         ))}
       </main>
 
@@ -131,7 +120,7 @@ export function Menu() {
         showCloseGroup={!soloMode && isHost && group?.status === 'open'}
         onCloseGroup={handleCloseGroup}
         soloMode={soloMode}
-        onSoloCheckout={() => setScreen('solo-checkout')}
+        onSoloCheckout={handleSoloCheckout}
       />
 
       {/* solo 模式：揪團 + 購物車 兩個 floating badge */}
@@ -176,28 +165,13 @@ export function Menu() {
         </button>
       )}
 
-      {currentProduct && (
-        <ItemModal
-          key={`stack-${productStack.length}-${currentProduct.food_name}-${currentProduct.restaurant_name}`}
-          product={currentProduct}
-          products={products}
-          isStacked={productStack.length > 1}
-          previousProduct={previousProduct}
-          onClose={() => (productStack.length > 1 ? popProduct() : clearProductStack())}
-          onBack={popProduct}
-          onSwitchProduct={pushProduct}
-        />
+      {tappedProduct && (
+        <ItemModal product={tappedProduct} onClose={() => setTappedProduct(null)} />
       )}
 
       {/* solo 用 CartModal；group 用 CartDrawer */}
       {showCart && soloMode && (
-        <CartModal
-          onClose={() => setShowCart(false)}
-          onCheckout={() => {
-            setShowCart(false);
-            setScreen('solo-checkout');
-          }}
-        />
+        <CartModal onClose={() => setShowCart(false)} onCheckout={handleSoloCheckout} />
       )}
       {showCart && !soloMode && (
         <CartDrawer onClose={() => setShowCart(false)} onCloseGroup={handleCloseGroup} />

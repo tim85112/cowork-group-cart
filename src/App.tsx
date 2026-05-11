@@ -6,6 +6,7 @@ import { ShareGroup } from '@/screens/ShareGroup';
 import { Menu } from '@/screens/Menu';
 import { ReviewClose } from '@/screens/ReviewClose';
 import { SoloCheckout } from '@/screens/SoloCheckout';
+import { UpsellScreen } from '@/screens/UpsellScreen';
 import type { GroupRow } from '@/types/db';
 
 export function App() {
@@ -63,6 +64,7 @@ export function App() {
       {!loading && screen === 'share' && <ShareGroup />}
       {!loading && screen === 'menu' && (soloMode || group) && <Menu />}
       {!loading && screen === 'review' && group && <ReviewClose />}
+      {!loading && screen === 'upsell' && soloMode && <UpsellScreen />}
       {!loading && screen === 'solo-checkout' && soloMode && <SoloCheckout />}
 
       {error && (
