@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useGroupStore } from '@/store/useGroupStore';
 import { formatNTD } from '@/lib/format';
 import type { Product } from '@/types/product';
 
@@ -21,8 +20,6 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function UpsellSection({ products, excludeFoodName, onTapProduct }: Props) {
-  const addSoloItem = useGroupStore((s) => s.addSoloItem);
-
   const upsellItems = useMemo(() => {
     const candidates = products
       .filter((p) => UPSELL_LABELS.includes(p.food_label))
@@ -33,33 +30,20 @@ export function UpsellSection({ products, excludeFoodName, onTapProduct }: Props
 
   if (upsellItems.length === 0) return null;
 
-  function handleQuickAdd(p: Product) {
-    // 如果商品有規格，改為開啟商品 modal 讓使用者選
-    const hasSpec1 = !!(p.spec1 && p.spec1.includes(','));
-    const hasSpec2 = !!(p.spec2 && p.spec2.includes(','));
-    if (hasSpec1 || hasSpec2) {
-      onTapProduct(p);
-      return;
-    }
-    addSoloItem({
-      food_name: p.food_name,
-      spec1: null,
-      spec2: null,
-      quantity: 1,
-      unit_price: p.price,
-      product_url: p.product_url,
-      restaurant_name: p.restaurant_name
-    });
-  }
-
   return (
     <div className="mt-5 pt-4 border-t border-cream">
       <p className="font-bold text-sm mb-2">是否加購？</p>
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+      <div
+        className="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {upsellItems.map((p) => (
-          <div
+          <button
             key={p.food_name + p.restaurant_name}
-            className="shrink-0 w-32 bg-cream/40 rounded-xl p-2 border border-cream"
+            type="button"
+            onClick={() => onTapProduct(p)}
+            className="shrink-0 w-32 bg-cream/40 rounded-xl p-2 border border-cream text-left active:scale-95 transition-transform"
+            style={{ touchAction: 'manipulation' }}
           >
             {p.image_url && (
               <img
@@ -74,15 +58,14 @@ export function UpsellSection({ products, excludeFoodName, onTapProduct }: Props
             </p>
             <div className="flex items-center justify-between mt-1">
               <span className="text-xs text-primary font-bold">{formatNTD(p.price)}</span>
-              <button
-                onClick={() => handleQuickAdd(p)}
-                className="w-6 h-6 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center active:scale-95"
-                aria-label="加入"
+              <span
+                className="w-7 h-7 rounded-full bg-primary text-white text-base font-bold flex items-center justify-center"
+                aria-hidden="true"
               >
                 +
-              </button>
+              </span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

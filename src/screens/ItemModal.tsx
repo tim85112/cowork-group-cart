@@ -40,6 +40,8 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
   const unitPrice = product.price + addon;
   const total = unitPrice * qty;
 
+  const hasImage = !!product.image_url;
+
   async function handleAdd() {
     if (soloMode) {
       addSoloItem({
@@ -82,13 +84,27 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
     }
   }
 
+  // 商品名稱 + 餐廳 + 描述 + 單價 的區塊（兩種 layout 共用）
+  const titleBlock = (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="text-lg font-bold">{product.food_name}</h2>
+        <p className="text-xs text-gray-500">{product.restaurant_name}</p>
+        {product.description && (
+          <p className="text-sm text-gray-500 mt-1">{product.description}</p>
+        )}
+      </div>
+      <p className="text-primary font-bold whitespace-nowrap">{formatNTD(unitPrice)}</p>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-40 bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
         className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {product.image_url && (
+        {hasImage && (
           <img
             src={product.image_url}
             alt={product.food_name}
@@ -97,18 +113,10 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
           />
         )}
         <div className="p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold">{product.food_name}</h2>
-              <p className="text-xs text-gray-500">{product.restaurant_name}</p>
-              {product.description && (
-                <p className="text-sm text-gray-500 mt-1">{product.description}</p>
-              )}
-            </div>
-            <p className="text-primary font-bold whitespace-nowrap">{formatNTD(unitPrice)}</p>
-          </div>
+          {/* 有圖片：標題在上方（緊接圖片） */}
+          {hasImage && titleBlock}
 
-          <div className="mt-5 space-y-4">
+          <div className={hasImage ? 'mt-5 space-y-4' : 'space-y-4'}>
             {opts1.length > 0 && (
               <SpecRadioGroup label={label1} options={opts1} value={spec1} onChange={setSpec1} />
             )}
@@ -120,6 +128,13 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
               <QtyStepper value={qty} onChange={setQty} />
             </div>
           </div>
+
+          {/* 無圖片：標題移到規格 / 數量「下方」（在加購區與按鈕之間） */}
+          {!hasImage && (
+            <div className="mt-5 pt-4 border-t border-cream">
+              {titleBlock}
+            </div>
+          )}
 
           {soloMode && products && (
             <UpsellSection

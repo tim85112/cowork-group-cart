@@ -9,9 +9,9 @@ interface Props {
 export function BrandHeader({ ownerName, createdAt, countdownText, onCloseGroup, showCloseButton }: Props) {
   if (!ownerName) {
     return (
-      <header className="bg-primary text-white px-4 py-3 flex items-center gap-2">
+      <header className="bg-primary text-white px-4 py-3 flex items-center justify-center gap-2">
         <span className="text-2xl">🐪</span>
-        <h1 className="font-bold text-lg">商辦駝獸 · 團體購物車</h1>
+        <h1 className="font-bold text-lg">商辦駝獸 - 順天經貿廣場</h1>
       </header>
     );
   }

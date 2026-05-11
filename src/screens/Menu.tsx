@@ -122,21 +122,24 @@ export function Menu() {
         <>
           <button
             onClick={() => setShowGroupStart(true)}
-            className="fixed bottom-24 right-4 bg-accent text-primary font-bold rounded-full shadow-lg w-14 h-14 flex flex-col items-center justify-center active:scale-95 z-40"
+            className="fixed bottom-24 right-4 bg-accent text-primary font-extrabold rounded-full shadow-xl w-20 h-20 flex flex-col items-center justify-center active:scale-95 z-40 ring-2 ring-white"
             aria-label="開啟揪團"
+            style={{ touchAction: 'manipulation' }}
           >
-            <span className="text-lg leading-none">👥</span>
-            <span className="text-[11px] leading-tight mt-0.5">揪團</span>
+            <span className="text-3xl leading-none">👥</span>
+            <span className="text-sm leading-tight mt-1">揪團</span>
           </button>
 
           <button
             onClick={() => setShowCart(true)}
-            className="fixed bottom-40 right-4 bg-primary text-white rounded-full shadow-lg w-14 h-14 flex items-center justify-center active:scale-95 z-40 relative"
+            className="fixed bottom-48 right-4 bg-primary text-white rounded-full shadow-xl w-20 h-20 flex flex-col items-center justify-center active:scale-95 z-40 ring-2 ring-white"
             aria-label="開啟購物車"
+            style={{ touchAction: 'manipulation' }}
           >
-            <span className="text-xl leading-none">🛒</span>
+            <span className="text-3xl leading-none">🛒</span>
+            <span className="text-sm leading-tight mt-1 font-bold">購物車</span>
             {soloCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-primary text-[11px] font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 bg-accent text-primary text-xs font-bold rounded-full min-w-[1.5rem] h-6 px-1 flex items-center justify-center border-2 border-white">
                 {soloCount}
               </span>
             )}
@@ -158,6 +161,7 @@ export function Menu() {
 
       {tappedProduct && (
         <ItemModal
+          key={tappedProduct.food_name + tappedProduct.restaurant_name}
           product={tappedProduct}
           products={products}
           onClose={() => setTappedProduct(null)}

@@ -77,60 +77,67 @@ export function SoloCheckout() {
     const trimmedNotes = notes.trim() || null;
     const trimmedTaxId = taxId.trim() || null;
 
+    let step = '';
     try {
-      // 1. 建立 orders（status='pending'）
-      const { error: insErr } = await supabase.from('orders').insert({
-        id: orderId,
-        order_type: 'solo',
-        building_id: buildingId,
-        session_date: sessionDate,
-        status: 'pending',
-        payment_status: 'unpaid',
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        customer_email: null,
-        customer_notes: trimmedNotes,
-        want_receipt: wantReceipt,
-        tax_id: trimmedTaxId,
-        payment_method: paymentMethod,
-        items_subtotal: total,
-        net_amount: total
-      });
-      if (insErr) throw insErr;
+      step = '1.orders.insert';
+      {
+        const { error: insErr } = await supabase.from('orders').insert({
+          id: orderId,
+          order_type: 'solo',
+          building_id: buildingId,
+          session_date: sessionDate,
+          status: 'pending',
+          payment_status: 'unpaid',
+          customer_name: name.trim(),
+          customer_phone: phone.trim(),
+          customer_email: null,
+          customer_notes: trimmedNotes,
+          want_receipt: wantReceipt,
+          tax_id: trimmedTaxId,
+          payment_method: paymentMethod,
+          items_subtotal: total,
+          net_amount: total
+        });
+        if (insErr) throw insErr;
+      }
 
-      // 2. 寫入 order_items
-      const rows = soloItems.map((item, idx) => ({
-        order_id: orderId,
-        line_number: idx + 1,
-        member_name: null,
-        item_type: 'product',
-        display_name: buildDisplayName(item.food_name, item.spec1, item.spec2),
-        food_name: item.food_name,
-        spec: [item.spec1, item.spec2].filter(Boolean).join(', ') || null,
-        restaurant_name: item.restaurant_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        subtotal: item.unit_price * item.quantity,
-        product_url: item.product_url
-      }));
-      const { error: itemsErr } = await supabase.from('order_items').insert(rows);
-      if (itemsErr) throw itemsErr;
+      step = '2.order_items.insert';
+      {
+        const rows = soloItems.map((item, idx) => ({
+          order_id: orderId,
+          line_number: idx + 1,
+          member_name: null,
+          item_type: 'product',
+          display_name: buildDisplayName(item.food_name, item.spec1, item.spec2),
+          food_name: item.food_name,
+          spec: [item.spec1, item.spec2].filter(Boolean).join(', ') || null,
+          restaurant_name: item.restaurant_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          subtotal: item.unit_price * item.quantity,
+          product_url: item.product_url
+        }));
+        const { error: itemsErr } = await supabase.from('order_items').insert(rows);
+        if (itemsErr) throw itemsErr;
+      }
 
-      // 3. 取得流水號（與揪團共用 daily_counters）
+      step = '3.rpc.get_next_pickup_number';
       const { data: pickupNum, error: rpcErr } = await supabase.rpc('get_next_pickup_number', {
         p_building_id: buildingId,
         p_session_date: sessionDate
       });
       if (rpcErr) throw rpcErr;
 
-      // 4. 更新 orders.pickup_number
-      const { error: updErr } = await supabase
-        .from('orders')
-        .update({ pickup_number: pickupNum })
-        .eq('id', orderId);
-      if (updErr) throw updErr;
+      step = '4.orders.update.pickup_number';
+      {
+        const { error: updErr } = await supabase
+          .from('orders')
+          .update({ pickup_number: pickupNum })
+          .eq('id', orderId);
+        if (updErr) throw updErr;
+      }
 
-      // 5. 寄送橘色 Flex（含取餐碼）
+      step = '5.sendSoloOrderFlex';
       await sendSoloOrderFlex(
         total,
         String(pickupNum ?? '?'),
@@ -144,7 +151,7 @@ export function SoloCheckout() {
         }))
       );
 
-      // 6. 觸發 n8n / FastAPI 代填
+      step = '6.api.notifyIndividualConfirmed';
       await api.notifyIndividualConfirmed({
         group_id: orderId,
         order_type: 'solo',
@@ -169,10 +176,12 @@ export function SoloCheckout() {
         payment_method: paymentMethod
       });
 
+      step = '7.closeWindow';
       clearSoloCart();
       await closeWindow();
     } catch (e) {
-      setError((e as Error).message || '送出訂單失敗');
+      const msg = (e as Error).message || '送出訂單失敗';
+      setError(`[${step}] ${msg}`);
       setSubmitting(false);
       setShowConfirm(false);
     }

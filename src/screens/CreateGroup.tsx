@@ -65,8 +65,25 @@ export function CreateGroup() {
     }
   }
 
+  function handleBack() {
+    useGroupStore.getState().setSoloMode(true);
+    setScreen('menu');
+  }
+
   return (
     <div className="min-h-full bg-cream">
+      <header className="bg-primary text-white px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={handleBack}
+          className="text-white text-xl active:scale-95 px-1"
+          aria-label="返回個人點餐"
+          type="button"
+          disabled={loading}
+        >
+          ‹
+        </button>
+        <span className="font-bold">建立揪團</span>
+      </header>
       <div className="px-4 pt-6 pb-24">
         <div className="card p-6 mt-4">
           <div className="flex flex-col items-center mb-5">
