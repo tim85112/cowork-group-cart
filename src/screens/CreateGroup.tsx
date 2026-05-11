@@ -1,14 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useGroupStore } from '@/store/useGroupStore';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
 import { env } from '@/lib/env';
-import {
-  loadSavedMemberInfo,
-  saveMemberInfo,
-  type SavedMemberInfo
-} from '@/lib/memberInfo';
+import { loadSavedMemberInfo, saveMemberInfo } from '@/lib/memberInfo';
 import type { GroupRow } from '@/types/db';
 
 export function CreateGroup() {
@@ -22,17 +18,16 @@ export function CreateGroup() {
   const [name, setName] = useState(profile?.displayName ?? '');
   const [phone, setPhone] = useState('');
   const [taxId, setTaxId] = useState('');
-  const [savedInfo, setSavedInfo] = useState<SavedMemberInfo | null>(null);
-
-  useEffect(() => {
-    setSavedInfo(loadSavedMemberInfo());
-  }, []);
 
   function applySavedInfo() {
-    if (!savedInfo) return;
-    if (savedInfo.name) setName(savedInfo.name);
-    if (savedInfo.phone) setPhone(savedInfo.phone);
-    if (savedInfo.taxId !== undefined) setTaxId(savedInfo.taxId);
+    const saved = loadSavedMemberInfo();
+    if (!saved || (!saved.name && !saved.phone)) {
+      setError('沒有可帶入的資料。先用個人版下過一次單之後再回來，就能秒填。');
+      return;
+    }
+    if (saved.name) setName(saved.name);
+    if (saved.phone) setPhone(saved.phone);
+    if (saved.taxId !== undefined) setTaxId(saved.taxId);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -132,15 +127,13 @@ export function CreateGroup() {
             <label className="block">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold">揪團者姓名</span>
-                {savedInfo && (
-                  <button
-                    type="button"
-                    onClick={applySavedInfo}
-                    className="text-xs text-primary font-bold underline active:opacity-70"
-                  >
-                    帶入會員資料
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={applySavedInfo}
+                  className="text-xs text-primary font-bold border border-primary rounded-full px-2.5 py-0.5 active:scale-95"
+                >
+                  帶入會員資料
+                </button>
               </div>
               <input
                 value={name}
