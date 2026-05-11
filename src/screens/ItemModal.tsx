@@ -3,17 +3,22 @@ import { supabase } from '@/lib/supabase';
 import { useGroupStore } from '@/store/useGroupStore';
 import { QtyStepper } from '@/components/QtyStepper';
 import { SpecRadioGroup, parseSpecOptions, parseSpecLabel } from '@/components/SpecRadioGroup';
+import { UpsellSection } from '@/components/UpsellSection';
 import { formatNTD } from '@/lib/format';
 import type { Product } from '@/types/product';
 
 interface Props {
   product: Product;
+  products?: Product[];        // 給 UpsellSection 用（solo 模式）
   onClose: () => void;
+  onSwitchProduct?: (p: Product) => void;
 }
 
-export function ItemModal({ product, onClose }: Props) {
+export function ItemModal({ product, products, onClose, onSwitchProduct }: Props) {
   const profile = useGroupStore((s) => s.profile);
   const group = useGroupStore((s) => s.group);
+  const soloMode = useGroupStore((s) => s.soloMode);
+  const addSoloItem = useGroupStore((s) => s.addSoloItem);
   const setError = useGroupStore((s) => s.setError);
 
   const opts1 = parseSpecOptions(product.spec1);
@@ -36,6 +41,20 @@ export function ItemModal({ product, onClose }: Props) {
   const total = unitPrice * qty;
 
   async function handleAdd() {
+    if (soloMode) {
+      addSoloItem({
+        food_name: product.food_name,
+        spec1: spec1 || null,
+        spec2: spec2 || null,
+        quantity: qty,
+        unit_price: unitPrice,
+        product_url: product.product_url || null,
+        restaurant_name: product.restaurant_name || null
+      });
+      onClose();
+      return;
+    }
+
     if (!profile || !group) return;
     if (group.status !== 'open') {
       setError('團購已收單，無法再加品項');
@@ -101,6 +120,14 @@ export function ItemModal({ product, onClose }: Props) {
               <QtyStepper value={qty} onChange={setQty} />
             </div>
           </div>
+
+          {soloMode && products && (
+            <UpsellSection
+              products={products}
+              excludeFoodName={product.food_name}
+              onTapProduct={(p) => onSwitchProduct?.(p)}
+            />
+          )}
 
           <div className="mt-6 flex gap-2">
             <button onClick={onClose} className="btn-ghost flex-1">取消</button>

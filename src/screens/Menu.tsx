@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
-import { useGroupStore, selectIsHost, selectGroupTotal } from '@/store/useGroupStore';
+import {
+  useGroupStore,
+  selectIsHost,
+  selectGroupTotal,
+  selectSoloTotal,
+  selectSoloCount
+} from '@/store/useGroupStore';
 import { useProducts } from '@/hooks/useProducts';
+import { useHotItems } from '@/hooks/useHotItems';
 import { useRealtimeCart } from '@/hooks/useRealtimeCart';
 import { useCountdown } from '@/hooks/useCountdown';
 import { env } from '@/lib/env';
@@ -8,7 +15,10 @@ import { BrandHeader } from '@/components/BrandHeader';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { SearchBar } from '@/components/SearchBar';
 import { ProductCard } from '@/components/ProductCard';
+import { HotItemsSection } from '@/components/HotItemsSection';
 import { BottomActionBar } from '@/components/BottomActionBar';
+import { CartModal } from '@/components/CartModal';
+import { GroupStartDialog } from '@/components/GroupStartDialog';
 import { ItemModal } from './ItemModal';
 import { CartDrawer } from './CartDrawer';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -18,17 +28,23 @@ export function Menu() {
   const group = useGroupStore((s) => s.group);
   const items = useGroupStore((s) => s.items);
   const isHost = useGroupStore(selectIsHost);
-  const total = useGroupStore(selectGroupTotal);
+  const groupTotal = useGroupStore(selectGroupTotal);
+  const soloMode = useGroupStore((s) => s.soloMode);
+  const soloTotal = useGroupStore(selectSoloTotal);
+  const soloCount = useGroupStore(selectSoloCount);
   const setScreen = useGroupStore((s) => s.setScreen);
+  const setSoloMode = useGroupStore((s) => s.setSoloMode);
 
-  useRealtimeCart(group?.id ?? null);
+  useRealtimeCart(soloMode ? null : group?.id ?? null);
   const { products, loading, error, reload } = useProducts(env.buildingId);
+  const hotItems = useHotItems(env.buildingId);
 
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [search, setSearch] = useState('');
   const [tappedProduct, setTappedProduct] = useState<Product | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showGroupStart, setShowGroupStart] = useState(false);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -52,15 +68,26 @@ export function Menu() {
     setScreen('review');
   }
 
+  function handleGroupStartConfirm() {
+    setShowGroupStart(false);
+    setSoloMode(false);
+    setScreen('create');
+  }
+
+  // 顯示用：solo 模式用 soloItems / soloTotal；group 模式用既有
+  const displayCount = soloMode ? soloCount : items.length;
+  const displayTotal = soloMode ? soloTotal : groupTotal;
+
   return (
     <div className="min-h-full pb-24">
       <BrandHeader
-        ownerName={group?.owner_name}
-        createdAt={createdAt}
-        countdownText={countdown}
-        showCloseButton={isHost && group?.status === 'open'}
+        ownerName={soloMode ? undefined : group?.owner_name}
+        createdAt={soloMode ? '' : createdAt}
+        countdownText={soloMode ? '' : countdown}
+        showCloseButton={!soloMode && isHost && group?.status === 'open'}
         onCloseGroup={handleCloseGroup}
       />
+      <HotItemsSection hotItems={hotItems} products={products} onTap={setTappedProduct} />
       <CategoryTabs active={activeCat} onChange={setActiveCat} />
       <SearchBar value={search} onChange={setSearch} />
 
@@ -81,14 +108,44 @@ export function Menu() {
       </main>
 
       <BottomActionBar
-        itemCount={items.length}
-        total={total}
+        itemCount={displayCount}
+        total={displayTotal}
         onCart={() => setShowCart(true)}
-        showCloseGroup={isHost && group?.status === 'open'}
+        showCloseGroup={!soloMode && isHost && group?.status === 'open'}
         onCloseGroup={handleCloseGroup}
+        soloMode={soloMode}
+        onSoloCheckout={() => setScreen('solo-checkout')}
       />
 
-      {group?.status === 'open' && (
+      {/* solo 模式：揪團 + 購物車 兩個 floating badge */}
+      {soloMode && (
+        <>
+          <button
+            onClick={() => setShowGroupStart(true)}
+            className="fixed bottom-24 right-4 bg-accent text-primary font-bold rounded-full shadow-lg w-14 h-14 flex flex-col items-center justify-center active:scale-95 z-40"
+            aria-label="開啟揪團"
+          >
+            <span className="text-lg leading-none">👥</span>
+            <span className="text-[11px] leading-tight mt-0.5">揪團</span>
+          </button>
+
+          <button
+            onClick={() => setShowCart(true)}
+            className="fixed bottom-40 right-4 bg-primary text-white rounded-full shadow-lg w-14 h-14 flex items-center justify-center active:scale-95 z-40 relative"
+            aria-label="開啟購物車"
+          >
+            <span className="text-xl leading-none">🛒</span>
+            {soloCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-accent text-primary text-[11px] font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center border-2 border-white">
+                {soloCount}
+              </span>
+            )}
+          </button>
+        </>
+      )}
+
+      {/* group 模式：保留原本分享按鈕 */}
+      {!soloMode && group?.status === 'open' && (
         <button
           onClick={() => setScreen('share')}
           className="fixed bottom-24 right-4 bg-accent text-primary font-bold rounded-full shadow-lg w-14 h-14 flex flex-col items-center justify-center active:scale-95 z-40"
@@ -100,15 +157,38 @@ export function Menu() {
       )}
 
       {tappedProduct && (
-        <ItemModal product={tappedProduct} onClose={() => setTappedProduct(null)} />
+        <ItemModal
+          product={tappedProduct}
+          products={products}
+          onClose={() => setTappedProduct(null)}
+          onSwitchProduct={(p) => setTappedProduct(p)}
+        />
       )}
-      {showCart && (
+
+      {/* solo 用 CartModal；group 用 CartDrawer */}
+      {showCart && soloMode && (
+        <CartModal
+          onClose={() => setShowCart(false)}
+          onCheckout={() => {
+            setShowCart(false);
+            setScreen('solo-checkout');
+          }}
+        />
+      )}
+      {showCart && !soloMode && (
         <CartDrawer onClose={() => setShowCart(false)} onCloseGroup={handleCloseGroup} />
       )}
+
       {showConfirm && (
         <ConfirmDialog
           onCancel={() => setShowConfirm(false)}
           onConfirm={handleConfirmCloseGroup}
+        />
+      )}
+      {showGroupStart && (
+        <GroupStartDialog
+          onCancel={() => setShowGroupStart(false)}
+          onConfirm={handleGroupStartConfirm}
         />
       )}
     </div>

@@ -16,6 +16,7 @@ export function CartDrawer({ onClose, onCloseGroup }: Props) {
   const group = useGroupStore((s) => s.group);
   const isHost = useGroupStore(selectIsHost);
   const total = useGroupStore(selectGroupTotal);
+  const removeItem = useGroupStore((s) => s.removeItem);
 
   const deadline = group ? new Date(group.created_at).getTime() + 24 * 3600 * 1000 : null;
   const countdown = useCountdown(deadline);
@@ -36,7 +37,12 @@ export function CartDrawer({ onClose, onCloseGroup }: Props) {
   );
 
   async function handleRemove(id: string) {
-    await supabase.from('cart_items').delete().eq('id', id).eq('user_id', profile!.userId);
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', profile!.userId);
+    if (!error) removeItem(id);
   }
 
   return (

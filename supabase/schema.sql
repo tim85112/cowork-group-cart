@@ -105,3 +105,85 @@ $$ language plpgsql security definer;
 
 grant execute on function get_next_pickup_number(text, text)          to anon, authenticated;
 grant execute on function rollback_pickup_number(text, text, integer) to anon, authenticated;
+
+-- ============================================================
+-- 統一訂單表（orders + order_items）
+-- 個人散單 + 揪團都寫入此表，供未來後台管理使用
+-- ============================================================
+create table if not exists orders (
+  id                      text primary key,            -- nanoid(10)；揪團用 group_id
+  order_type              text not null check (order_type in ('solo','group')),
+  building_id             text not null default 'B01',
+  session_date            date not null,
+  pickup_number           integer,
+
+  status                  text not null default 'pending'
+                          check (status in ('pending','confirmed','cancelled')),
+  payment_status          text not null default 'unpaid'
+                          check (payment_status in ('unpaid','paid','refunded')),
+
+  customer_name           text not null,
+  customer_phone          text not null,
+  customer_email          text,
+  customer_notes          text,
+  want_receipt            boolean not null default false,
+  tax_id                  text,
+
+  payment_method          text,
+  delivery_person         text,
+  promo_code              text,
+
+  items_subtotal          integer not null default 0,
+  delivery_fee            integer not null default 0,
+  delivery_fee_by_consumer  boolean not null default false,
+  payment_fee             integer not null default 0,
+  payment_fee_by_consumer   boolean not null default false,
+  net_amount              integer,
+
+  created_at              timestamptz not null default now(),
+  updated_at              timestamptz not null default now()
+);
+create index if not exists orders_session_date_idx on orders (building_id, session_date);
+create index if not exists orders_status_idx on orders (status, payment_status);
+
+create table if not exists order_items (
+  id              uuid primary key default gen_random_uuid(),
+  order_id        text not null references orders(id) on delete cascade,
+  line_number     integer not null,
+  member_name     text,                                  -- 揪團成員；散單為 null
+  item_type       text not null default 'product'
+                  check (item_type in ('product','discount','refund')),
+  display_name    text not null,
+  food_name       text not null,
+  spec            text,
+  restaurant_name text,
+  quantity        integer not null default 1 check (quantity > 0),
+  unit_price      integer not null default 0,
+  subtotal        integer not null default 0,
+  product_url     text,
+  created_at      timestamptz not null default now()
+);
+create index if not exists order_items_order_idx on order_items (order_id);
+
+alter table orders enable row level security;
+alter table order_items enable row level security;
+
+drop policy if exists orders_read   on orders;
+drop policy if exists orders_insert on orders;
+drop policy if exists orders_update on orders;
+create policy orders_read   on orders for select using (true);
+create policy orders_insert on orders for insert with check (true);
+create policy orders_update on orders for update using (true);
+
+drop policy if exists order_items_read   on order_items;
+drop policy if exists order_items_insert on order_items;
+create policy order_items_read   on order_items for select using (true);
+create policy order_items_insert on order_items for insert with check (true);
+
+create or replace function update_updated_at()
+returns trigger language plpgsql as $$
+begin new.updated_at = now(); return new; end;
+$$;
+drop trigger if exists orders_updated_at on orders;
+create trigger orders_updated_at before update on orders
+  for each row execute function update_updated_at();
