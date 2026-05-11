@@ -41,10 +41,27 @@ export function Menu() {
 
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [search, setSearch] = useState('');
-  const [tappedProduct, setTappedProduct] = useState<Product | null>(null);
+  // 商品 modal 用堆疊管理：最後一個是當前顯示的，前一個是「返回上一個」用
+  const [productStack, setProductStack] = useState<Product[]>([]);
+  const currentProduct = productStack[productStack.length - 1];
+  const previousProduct =
+    productStack.length >= 2 ? productStack[productStack.length - 2] : undefined;
   const [showCart, setShowCart] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showGroupStart, setShowGroupStart] = useState(false);
+
+  function openProduct(p: Product) {
+    setProductStack([p]);
+  }
+  function pushProduct(p: Product) {
+    setProductStack((stack) => [...stack, p]);
+  }
+  function popProduct() {
+    setProductStack((stack) => stack.slice(0, -1));
+  }
+  function clearProductStack() {
+    setProductStack([]);
+  }
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -87,7 +104,7 @@ export function Menu() {
         showCloseButton={!soloMode && isHost && group?.status === 'open'}
         onCloseGroup={handleCloseGroup}
       />
-      <HotItemsSection hotItems={hotItems} products={products} onTap={setTappedProduct} />
+      <HotItemsSection hotItems={hotItems} products={products} onTap={openProduct} />
       <CategoryTabs active={activeCat} onChange={setActiveCat} />
       <SearchBar value={search} onChange={setSearch} />
 
@@ -103,7 +120,7 @@ export function Menu() {
           <div className="text-center text-gray-400 py-8">沒有符合的餐點</div>
         )}
         {filtered.map((p) => (
-          <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={setTappedProduct} />
+          <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={openProduct} />
         ))}
       </main>
 
@@ -159,13 +176,16 @@ export function Menu() {
         </button>
       )}
 
-      {tappedProduct && (
+      {currentProduct && (
         <ItemModal
-          key={tappedProduct.food_name + tappedProduct.restaurant_name}
-          product={tappedProduct}
+          key={`stack-${productStack.length}-${currentProduct.food_name}-${currentProduct.restaurant_name}`}
+          product={currentProduct}
           products={products}
-          onClose={() => setTappedProduct(null)}
-          onSwitchProduct={(p) => setTappedProduct(p)}
+          isStacked={productStack.length > 1}
+          previousProduct={previousProduct}
+          onClose={() => (productStack.length > 1 ? popProduct() : clearProductStack())}
+          onBack={popProduct}
+          onSwitchProduct={pushProduct}
         />
       )}
 

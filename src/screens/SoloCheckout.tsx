@@ -137,21 +137,9 @@ export function SoloCheckout() {
         if (updErr) throw updErr;
       }
 
-      step = '5.sendSoloOrderFlex';
-      await sendSoloOrderFlex(
-        total,
-        String(pickupNum ?? '?'),
-        name.trim(),
-        soloItems.map((i) => ({
-          food_name: i.food_name,
-          spec1: i.spec1,
-          spec2: i.spec2,
-          unit_price: i.unit_price,
-          quantity: i.quantity
-        }))
-      );
-
-      step = '6.api.notifyIndividualConfirmed';
+      // 先呼叫 n8n（觸發 Playwright 代填），確認成功後再送 Flex；
+      // 避免 n8n 沒接到但用戶以為已下單
+      step = '5.api.notifyIndividualConfirmed';
       await api.notifyIndividualConfirmed({
         group_id: orderId,
         order_type: 'solo',
@@ -175,6 +163,20 @@ export function SoloCheckout() {
         },
         payment_method: paymentMethod
       });
+
+      step = '6.sendSoloOrderFlex';
+      await sendSoloOrderFlex(
+        total,
+        String(pickupNum ?? '?'),
+        name.trim(),
+        soloItems.map((i) => ({
+          food_name: i.food_name,
+          spec1: i.spec1,
+          spec2: i.spec2,
+          unit_price: i.unit_price,
+          quantity: i.quantity
+        }))
+      );
 
       step = '7.closeWindow';
       clearSoloCart();

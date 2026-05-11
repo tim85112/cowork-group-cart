@@ -12,9 +12,20 @@ interface Props {
   products?: Product[];        // 給 UpsellSection 用（solo 模式）
   onClose: () => void;
   onSwitchProduct?: (p: Product) => void;
+  isStacked?: boolean;         // 是否為堆疊起來的加購 modal
+  previousProduct?: Product;   // 前一個商品（用於返回按鈕）
+  onBack?: () => void;         // 返回上一個商品
 }
 
-export function ItemModal({ product, products, onClose, onSwitchProduct }: Props) {
+export function ItemModal({
+  product,
+  products,
+  onClose,
+  onSwitchProduct,
+  isStacked,
+  previousProduct,
+  onBack
+}: Props) {
   const profile = useGroupStore((s) => s.profile);
   const group = useGroupStore((s) => s.group);
   const soloMode = useGroupStore((s) => s.soloMode);
@@ -112,6 +123,16 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
             onError={(e) => ((e.currentTarget.style.display = 'none'))}
           />
         )}
+        {isStacked && previousProduct && onBack && (
+          <button
+            onClick={onBack}
+            className="sticky top-0 z-10 w-full flex items-center gap-1.5 bg-cream/95 backdrop-blur px-4 py-2 text-sm text-primary font-bold border-b border-cream active:bg-cream"
+            type="button"
+          >
+            <span className="text-base leading-none">‹</span>
+            <span className="truncate">返回「{previousProduct.food_name}」</span>
+          </button>
+        )}
         <div className="p-5">
           {/* 有圖片：標題在上方（緊接圖片） */}
           {hasImage && titleBlock}
@@ -136,7 +157,8 @@ export function ItemModal({ product, products, onClose, onSwitchProduct }: Props
             </div>
           )}
 
-          {soloMode && products && (
+          {/* 加購區塊：只在「最外層原始商品」顯示，疊加上來的 modal 不再顯示，避免無限套疊 */}
+          {soloMode && products && !isStacked && (
             <UpsellSection
               products={products}
               excludeFoodName={product.food_name}

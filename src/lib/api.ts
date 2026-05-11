@@ -57,13 +57,47 @@ interface IndividualConfirmPayload {
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${env.n8nBase}/webhook/${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error(`${path} 失敗 ${res.status}`);
-  return res.json() as Promise<T>;
+  const url = `${env.n8nBase}/webhook/${path}`;
+  // 預先驗證 URL（iOS WebKit 對 URL 較嚴格）
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch (e) {
+    throw new Error(`bad URL: ${url} (${(e as Error).message})`);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(parsed.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+  } catch (netErr) {
+    throw new Error(`fetch fail: ${(netErr as Error).message}`);
+  }
+
+  if (!res.ok) {
+    let preview = '';
+    try {
+      preview = (await res.text()).slice(0, 150);
+    } catch {}
+    throw new Error(`${path} status=${res.status} ${preview}`);
+  }
+
+  // 不要求 JSON 回應；n8n 有時 respondImmediately 會回空 body
+  let text = '';
+  try {
+    text = await res.text();
+  } catch {
+    return {} as T;
+  }
+  if (!text || !text.trim()) return {} as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {} as T;
+  }
 }
 
 export const api = {
