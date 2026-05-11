@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  useGroupStore,
-  selectSoloTotal,
-  selectSoloCount
-} from '@/store/useGroupStore';
+import { useGroupStore, selectSoloTotal } from '@/store/useGroupStore';
 import { useProducts } from '@/hooks/useProducts';
 import { env } from '@/lib/env';
 import { formatNTD } from '@/lib/format';
@@ -26,7 +22,6 @@ export function UpsellScreen() {
   const { products, loading } = useProducts(env.buildingId);
   const soloItems = useGroupStore((s) => s.soloItems);
   const total = useGroupStore(selectSoloTotal);
-  const soloCount = useGroupStore(selectSoloCount);
   const setScreen = useGroupStore((s) => s.setScreen);
 
   const [tappedProduct, setTappedProduct] = useState<Product | null>(null);
@@ -63,11 +58,9 @@ export function UpsellScreen() {
 
   return (
     <div className="min-h-full bg-cream pb-32">
-      <header className="bg-primary text-white px-4 py-3">
-        <h1 className="font-bold">加購推薦</h1>
-        <p className="text-xs opacity-80 mt-0.5">
-          來點甜點飲料配你的餐點吧！（已點 {soloCount} 件）
-        </p>
+      <header className="bg-primary text-white px-4 py-4">
+        <h1 className="font-bold text-2xl leading-tight">加購推薦</h1>
+        <p className="text-base opacity-90 mt-1">來點甜點飲料配你的餐點吧！</p>
       </header>
 
       <main className="px-4 py-4">
