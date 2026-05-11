@@ -88,7 +88,16 @@ export function CreateGroup() {
         <div className="card p-6 mt-4">
           <div className="flex flex-col items-center mb-5">
             <img src="https://i.meee.com.tw/TxIzl4T.png" className="w-28 h-28 object-contain" />
-            <p style={{ fontFamily: "'KaiU', serif", fontSize: '1.6rem', letterSpacing: '0.15em', color: '#3a1a00' }}>
+            <p
+              style={{
+                fontFamily:
+                  "'PingFang TC','Microsoft JhengHei','Noto Sans TC','Helvetica Neue',sans-serif",
+                fontSize: '1.75rem',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                color: '#3a1a00'
+              }}
+            >
               商辦駝獸
             </p>
           </div>
