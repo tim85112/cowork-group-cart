@@ -106,16 +106,28 @@ export const api = {
   },
   notifyGroupConfirmed(payload: ConfirmGroupPayload) {
     const liff_url = `https://liff.line.me/${env.liffId}?groupId=${payload.group_id}`;
-    return postJson<{ ok: boolean }>('group-cart/confirmed', {
-      ...payload,
-      liff_url,
-      ok_to_run: 'true'        // n8n flow「if 可自動代填」閘門
-    });
+    // 不再送 ok_to_run；n8n「Dry-run validator」會根據 cart_items + recipient 自己 set
+    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url });
   },
   notifyIndividualConfirmed(payload: IndividualConfirmPayload) {
+    // n8n「驗證 body」要求 order_summary 必須是陣列；個人散單就是一個成員，模擬同樣結構
+    const order_summary = [
+      {
+        user_name: payload.recipient.name,
+        is_owner: true,
+        subtotal: payload.total_amount,
+        items: payload.cart_items.map((i) => ({
+          food_name: i.food_name,
+          quantity: i.quantity,
+          price: i.unit_price,
+          spec: [i.spec1, i.spec2].filter(Boolean).join(' / ') || undefined
+        }))
+      }
+    ];
     return postJson<{ ok: boolean }>('group-cart/confirmed', {
       ...payload,
-      ok_to_run: 'true'        // n8n flow「if 可自動代填」閘門
+      order_summary
+      // 不需要送 ok_to_run，n8n「Dry-run validator」會根據 cart_items + recipient 自己 set
     });
   },
   async fetchProducts(buildingId: string): Promise<Product[]> {
