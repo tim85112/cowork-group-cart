@@ -65,7 +65,8 @@ export function Menu() {
 
   function handleConfirmCloseGroup() {
     setShowConfirm(false);
-    setScreen('review');
+    // 揪團收單也先走加購推薦頁，再進 ReviewClose 結帳
+    setScreen('upsell');
   }
 
   function handleGroupStartConfirm() {

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useGroupStore, selectSoloTotal } from '@/store/useGroupStore';
+import {
+  useGroupStore,
+  selectSoloTotal,
+  selectGroupTotal
+} from '@/store/useGroupStore';
 import { useProducts } from '@/hooks/useProducts';
 import { env } from '@/lib/env';
 import { formatNTD } from '@/lib/format';
@@ -21,16 +25,24 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function UpsellScreen() {
   const { products, loading } = useProducts(env.buildingId);
+  const soloMode = useGroupStore((s) => s.soloMode);
   const soloItems = useGroupStore((s) => s.soloItems);
-  const total = useGroupStore(selectSoloTotal);
+  const items = useGroupStore((s) => s.items);
+  const soloTotal = useGroupStore(selectSoloTotal);
+  const groupTotal = useGroupStore(selectGroupTotal);
   const setScreen = useGroupStore((s) => s.setScreen);
 
   const [tappedProduct, setTappedProduct] = useState<Product | null>(null);
 
-  // 隨機 6 個加購商品。故意只依賴 products 與 soloItems 第一次的 snapshot，
-  // 避免使用者加完一個商品 -> soloItems 變動 -> 整頁洗牌（很糟的 UX）
-  const initialInCart = useMemo(
-    () => new Set(soloItems.map((i) => i.food_name)),
+  // 兩種模式統一參考：群組模式用 Supabase realtime items；個人模式用本地 soloItems
+  const cartItems = soloMode ? soloItems : items;
+  const total = soloMode ? soloTotal : groupTotal;
+  const nextScreen = soloMode ? 'solo-checkout' : 'review';
+
+  // 隨機 6 個加購商品；只用「初次進來時」的購物車當排除依據，
+  // 避免使用者邊加邊洗牌（很糟的 UX）
+  const initialCartFoods = useMemo(
+    () => new Set(cartItems.map((i) => i.food_name)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -38,21 +50,20 @@ export function UpsellScreen() {
   const upsellItems = useMemo(() => {
     const candidates = products
       .filter((p) => UPSELL_LABELS.includes(p.food_label))
-      .filter((p) => !initialInCart.has(p.food_name))
+      .filter((p) => !initialCartFoods.has(p.food_name))
       .filter((p) => p.product_url);
     return shuffle(candidates).slice(0, UPSELL_MAX);
-  }, [products, initialInCart]);
+  }, [products, initialCartFoods]);
 
-  // 沒商品 / 沒可加購選項 → 自動跳到結帳
+  // 沒可加購商品 → 直接跳下一步
   useEffect(() => {
     if (!loading && products.length > 0 && upsellItems.length === 0) {
-      setScreen('solo-checkout');
+      setScreen(nextScreen);
     }
-  }, [loading, products.length, upsellItems.length, setScreen]);
+  }, [loading, products.length, upsellItems.length, setScreen, nextScreen]);
 
-  // 計算每個加購商品在 cart 中已加的數量（即時更新）
   function qtyInCart(foodName: string): number {
-    return soloItems
+    return cartItems
       .filter((i) => i.food_name === foodName)
       .reduce((s, i) => s + i.quantity, 0);
   }
@@ -90,10 +101,7 @@ export function UpsellScreen() {
           <button onClick={() => setScreen('menu')} className="btn-ghost flex-1">
             繼續選購
           </button>
-          <button
-            onClick={() => setScreen('solo-checkout')}
-            className="btn-primary flex-1"
-          >
+          <button onClick={() => setScreen(nextScreen)} className="btn-primary flex-1">
             下一步
           </button>
         </div>
@@ -120,7 +128,6 @@ function UpsellCard({ product, qty, onTap }: CardProps) {
       className="relative bg-white rounded-xl border border-cream p-2 text-left active:scale-[0.98] transition-transform shadow-sm flex flex-col"
       style={{ touchAction: 'manipulation' }}
     >
-      {/* 固定的圖片區塊：有圖顯示圖、沒圖顯示佔位，讓所有卡片視覺對齊 */}
       <div className="w-full aspect-square rounded-lg mb-1.5 overflow-hidden bg-cream/40 flex items-center justify-center">
         {product.image_url ? (
           <img

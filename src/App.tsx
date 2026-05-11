@@ -64,7 +64,7 @@ export function App() {
       {!loading && screen === 'share' && <ShareGroup />}
       {!loading && screen === 'menu' && (soloMode || group) && <Menu />}
       {!loading && screen === 'review' && group && <ReviewClose />}
-      {!loading && screen === 'upsell' && soloMode && <UpsellScreen />}
+      {!loading && screen === 'upsell' && (soloMode || group) && <UpsellScreen />}
       {!loading && screen === 'solo-checkout' && soloMode && <SoloCheckout />}
 
       {error && (

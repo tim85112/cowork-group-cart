@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { closeWindow, sendSoloOrderFlex } from '@/lib/liff';
 import { formatNTD, getSessionDate } from '@/lib/format';
 import { env } from '@/lib/env';
+import { loadSavedMemberInfo, saveMemberInfo, type SavedMemberInfo } from '@/lib/memberInfo';
 import { SoloConfirmDialog } from '@/components/SoloConfirmDialog';
 
 const PAYMENT_OPTIONS = [
@@ -18,32 +19,6 @@ type PaymentValue = (typeof PAYMENT_OPTIONS)[number]['value'];
 
 const NOTES_MAX = 50;
 const PHONE_RE = /^(\+886|0)?9\d{8}$/;
-
-const MEMBER_INFO_KEY = 'gc:solo:member_info';
-
-type SavedMemberInfo = {
-  name?: string;
-  phone?: string;
-  taxId?: string;
-};
-
-function loadSavedMemberInfo(): SavedMemberInfo | null {
-  try {
-    const raw = localStorage.getItem(MEMBER_INFO_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as SavedMemberInfo;
-    if (!parsed?.phone && !parsed?.name) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function saveMemberInfo(info: SavedMemberInfo) {
-  try {
-    localStorage.setItem(MEMBER_INFO_KEY, JSON.stringify(info));
-  } catch {}
-}
 
 function buildDisplayName(foodName: string, spec1: string | null, spec2: string | null) {
   const spec = [spec1, spec2].filter(Boolean).join(', ');

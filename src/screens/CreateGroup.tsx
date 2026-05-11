@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useGroupStore } from '@/store/useGroupStore';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
 import { env } from '@/lib/env';
+import {
+  loadSavedMemberInfo,
+  saveMemberInfo,
+  type SavedMemberInfo
+} from '@/lib/memberInfo';
 import type { GroupRow } from '@/types/db';
 
 export function CreateGroup() {
@@ -17,6 +22,18 @@ export function CreateGroup() {
   const [name, setName] = useState(profile?.displayName ?? '');
   const [phone, setPhone] = useState('');
   const [taxId, setTaxId] = useState('');
+  const [savedInfo, setSavedInfo] = useState<SavedMemberInfo | null>(null);
+
+  useEffect(() => {
+    setSavedInfo(loadSavedMemberInfo());
+  }, []);
+
+  function applySavedInfo() {
+    if (!savedInfo) return;
+    if (savedInfo.name) setName(savedInfo.name);
+    if (savedInfo.phone) setPhone(savedInfo.phone);
+    if (savedInfo.taxId !== undefined) setTaxId(savedInfo.taxId);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,13 +50,14 @@ export function CreateGroup() {
     setLoading(true);
     try {
       const groupId = nanoid(10);
+      const trimmedTaxId = taxId.trim();
       const row: Partial<GroupRow> = {
         id: groupId,
         building_id: env.buildingId,
         owner_user_id: profile.userId,
         owner_name: name.trim(),
         owner_phone: phone.trim(),
-        tax_id: taxId.trim() || null,
+        tax_id: trimmedTaxId || null,
         status: 'open'
       };
       const { data, error } = await supabase.from('groups').insert(row).select().single();
@@ -50,6 +68,13 @@ export function CreateGroup() {
         owner_name: name.trim(),
         owner_phone: phone.trim(),
         owner_user_id: profile.userId
+      });
+
+      // 儲存會員資料供下次「帶入會員資料」+ 個人結帳共用
+      saveMemberInfo({
+        name: name.trim(),
+        phone: phone.trim(),
+        taxId: trimmedTaxId
       });
 
       setGroup(data as GroupRow);
@@ -72,17 +97,17 @@ export function CreateGroup() {
 
   return (
     <div className="min-h-full bg-cream">
-      <header className="bg-primary text-white px-4 py-3 flex items-center gap-3">
+      <header className="bg-primary text-white px-4 py-3 flex items-center">
         <button
           onClick={handleBack}
-          className="text-white text-xl active:scale-95 px-1"
+          className="text-white active:scale-95 flex items-center gap-1 px-1"
           aria-label="返回個人點餐"
           type="button"
           disabled={loading}
         >
-          ‹
+          <span className="text-2xl leading-none">‹</span>
+          <span className="text-sm font-medium">返回個人點餐</span>
         </button>
-        <span className="font-bold">建立揪團</span>
       </header>
       <div className="px-4 pt-6 pb-24">
         <div className="card p-6 mt-4">
@@ -105,11 +130,22 @@ export function CreateGroup() {
           <p className="text-sm text-gray-500 mb-6">輕鬆揪團，每天省下 30 分鐘的訂餐時間！</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <span className="text-sm font-bold">揪團者姓名</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-bold">揪團者姓名</span>
+                {savedInfo && (
+                  <button
+                    type="button"
+                    onClick={applySavedInfo}
+                    className="text-xs text-primary font-bold underline active:opacity-70"
+                  >
+                    帶入會員資料
+                  </button>
+                )}
+              </div>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field mt-1"
+                className="input-field"
                 placeholder="您的稱呼"
                 required
               />
