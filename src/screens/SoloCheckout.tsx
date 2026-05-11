@@ -19,6 +19,32 @@ type PaymentValue = (typeof PAYMENT_OPTIONS)[number]['value'];
 const NOTES_MAX = 50;
 const PHONE_RE = /^(\+886|0)?9\d{8}$/;
 
+const MEMBER_INFO_KEY = 'gc:solo:member_info';
+
+type SavedMemberInfo = {
+  name?: string;
+  phone?: string;
+  taxId?: string;
+};
+
+function loadSavedMemberInfo(): SavedMemberInfo | null {
+  try {
+    const raw = localStorage.getItem(MEMBER_INFO_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedMemberInfo;
+    if (!parsed?.phone && !parsed?.name) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveMemberInfo(info: SavedMemberInfo) {
+  try {
+    localStorage.setItem(MEMBER_INFO_KEY, JSON.stringify(info));
+  } catch {}
+}
+
 function buildDisplayName(foodName: string, spec1: string | null, spec2: string | null) {
   const spec = [spec1, spec2].filter(Boolean).join(', ');
   return spec ? `${foodName}（${spec}）` : foodName;
@@ -40,10 +66,24 @@ export function SoloCheckout() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentValue>('Pay_ApplePay');
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [savedInfo, setSavedInfo] = useState<SavedMemberInfo | null>(null);
 
   useEffect(() => {
     if (!name && profile?.displayName) setName(profile.displayName);
   }, [profile, name]);
+
+  useEffect(() => {
+    setSavedInfo(loadSavedMemberInfo());
+  }, []);
+
+  function applySavedMemberInfo() {
+    if (!savedInfo) return;
+    if (savedInfo.name) setName(savedInfo.name);
+    if (savedInfo.phone) setPhone(savedInfo.phone);
+    if (savedInfo.taxId) {
+      setTaxId(savedInfo.taxId);
+    }
+  }
 
   // 沒有商品就跳回 menu
   useEffect(() => {
@@ -179,6 +219,11 @@ export function SoloCheckout() {
       );
 
       step = '7.closeWindow';
+      saveMemberInfo({
+        name: name.trim(),
+        phone: phone.trim(),
+        taxId: trimmedTaxId ?? ''
+      });
       clearSoloCart();
       await closeWindow();
     } catch (e) {
@@ -196,34 +241,44 @@ export function SoloCheckout() {
       </header>
 
       <main className="px-4 py-4 space-y-4">
+        {savedInfo && (
+          <button
+            type="button"
+            onClick={applySavedMemberInfo}
+            className="w-full flex items-center justify-center px-3 py-2.5 rounded-lg border-2 border-primary text-primary bg-white text-base font-bold active:bg-primary/5"
+          >
+            帶入會員資料
+          </button>
+        )}
+
         <div>
-          <label className="block text-xs font-bold mb-1">
+          <label className="block text-base font-bold mb-1.5">
             <span className="text-red-500">*</span>訂購人
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-base"
             placeholder="姓名"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold mb-1">
+          <label className="block text-base font-bold mb-1.5">
             <span className="text-red-500">*</span>手機號碼
           </label>
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-base"
             placeholder="09xxxxxxxx 或 +886912345678"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold mb-1">
+          <label className="block text-base font-bold mb-1.5">
             備註（最多 {NOTES_MAX} 字）
           </label>
           <textarea
@@ -231,10 +286,10 @@ export function SoloCheckout() {
             onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
             rows={3}
             maxLength={NOTES_MAX}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm resize-none"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-base resize-none"
             placeholder="如有特殊需求請填寫"
           />
-          <p className="text-[11px] text-gray-400 text-right mt-0.5">
+          <p className="text-xs text-gray-400 text-right mt-0.5">
             {notes.length} / {NOTES_MAX}
           </p>
         </div>
@@ -244,13 +299,13 @@ export function SoloCheckout() {
             type="checkbox"
             checked={wantReceipt}
             onChange={(e) => setWantReceipt(e.target.checked)}
-            className="w-4 h-4"
+            className="w-5 h-5"
           />
-          <span className="text-sm">索取收據</span>
+          <span className="text-base font-bold">索取收據</span>
         </label>
 
         <div>
-          <label className="block text-xs font-bold mb-1">
+          <label className="block text-base font-bold mb-1.5">
             公司統編 <span className="text-gray-400 font-normal">（選填）</span>
           </label>
           <input
@@ -258,16 +313,16 @@ export function SoloCheckout() {
             value={taxId}
             onChange={(e) => setTaxId(e.target.value.replace(/\D/g, '').slice(0, 8))}
             inputMode="numeric"
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-base"
             placeholder="8 位數字"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold mb-2">
+          <label className="block text-base font-bold mb-2">
             <span className="text-red-500">*</span>付款方式
           </label>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {PAYMENT_OPTIONS.map((opt) => (
               <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -276,8 +331,9 @@ export function SoloCheckout() {
                   value={opt.value}
                   checked={paymentMethod === opt.value}
                   onChange={() => setPaymentMethod(opt.value)}
+                  className="w-4 h-4"
                 />
-                <span className="text-sm">{opt.label}</span>
+                <span className="text-base">{opt.label}</span>
               </label>
             ))}
           </div>
@@ -285,7 +341,7 @@ export function SoloCheckout() {
 
         <div className="bg-white rounded-xl p-3 border border-cream">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">訂單金額</span>
+            <span className="text-base text-gray-500">訂單金額</span>
             <span className="font-bold text-primary text-lg">{formatNTD(total)}</span>
           </div>
         </div>
