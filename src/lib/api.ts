@@ -106,10 +106,17 @@ export const api = {
   },
   notifyGroupConfirmed(payload: ConfirmGroupPayload) {
     const liff_url = `https://liff.line.me/${env.liffId}?groupId=${payload.group_id}`;
-    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url });
+    return postJson<{ ok: boolean }>('group-cart/confirmed', {
+      ...payload,
+      liff_url,
+      ok_to_run: 'true'        // n8n flow「if 可自動代填」閘門
+    });
   },
   notifyIndividualConfirmed(payload: IndividualConfirmPayload) {
-    return postJson<{ ok: boolean }>('group-cart/confirmed', payload);
+    return postJson<{ ok: boolean }>('group-cart/confirmed', {
+      ...payload,
+      ok_to_run: 'true'        // n8n flow「if 可自動代填」閘門
+    });
   },
   async fetchProducts(buildingId: string): Promise<Product[]> {
     const url = `${env.n8nBase}/webhook/group-cart/products?building=${encodeURIComponent(buildingId)}`;
