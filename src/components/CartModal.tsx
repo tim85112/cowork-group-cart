@@ -31,15 +31,15 @@ export function CartModal({ onClose, onCheckout }: Props) {
         </button>
 
         <header className="px-6 pt-6 pb-3 text-center border-b border-cream">
-          <h2 className="font-bold text-lg">訂購明細</h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <h2 className="font-bold text-xl">訂購明細</h2>
+          <p className="text-sm text-gray-500 mt-1">
             目前選購 <span className="text-primary font-bold">{soloItems.length}</span> 項商品
           </p>
         </header>
 
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
           {soloItems.length === 0 && (
-            <div className="text-center text-gray-400 py-8 text-sm">尚未選購任何商品</div>
+            <div className="text-center text-gray-400 py-8 text-base">尚未選購任何商品</div>
           )}
 
           {soloItems.map((item) => {
@@ -49,26 +49,26 @@ export function CartModal({ onClose, onCheckout }: Props) {
               <div key={item.id} className="flex flex-col gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm">{item.food_name}</p>
-                    {spec && <p className="text-xs text-gray-500">{spec}</p>}
-                    <p className="text-xs text-gray-400 mt-0.5">{formatNTD(item.unit_price)}</p>
+                    <p className="font-bold text-base">{item.food_name}</p>
+                    {spec && <p className="text-sm text-gray-500">{spec}</p>}
+                    <p className="text-sm text-gray-400 mt-0.5">{formatNTD(item.unit_price)}</p>
                   </div>
-                  <p className="font-bold text-sm whitespace-nowrap">{formatNTD(subtotal)}</p>
+                  <p className="font-bold text-base whitespace-nowrap">{formatNTD(subtotal)}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateSoloQty(item.id, item.quantity - 1)}
-                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-700 active:scale-95"
+                    className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-700 text-lg active:scale-95"
                   >
                     −
                   </button>
-                  <span className="min-w-[2.5rem] text-center font-medium border border-gray-200 rounded px-2 py-0.5 text-sm">
+                  <span className="min-w-[2.5rem] text-center font-medium border border-gray-200 rounded px-2 py-0.5 text-base">
                     {item.quantity}
                   </span>
                   <button
                     onClick={() => updateSoloQty(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-700 active:scale-95"
+                    className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-700 text-lg active:scale-95"
                   >
                     +
                   </button>
@@ -78,9 +78,9 @@ export function CartModal({ onClose, onCheckout }: Props) {
           })}
         </div>
 
-        <div className="px-5 py-3 bg-cream/50 border-t border-cream text-center text-sm">
+        <div className="px-5 py-3 bg-cream/50 border-t border-cream text-center text-base">
           總計 <span className="font-bold">{totalItems}</span> 項 / 共{' '}
-          <span className="font-bold text-primary">{formatNTD(total)}</span>
+          <span className="font-bold text-primary">${' '}{total.toLocaleString('zh-Hant')}</span>
         </div>
 
         <div className="px-5 py-4 flex gap-2 border-t border-cream">
