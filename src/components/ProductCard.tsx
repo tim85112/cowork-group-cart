@@ -1,5 +1,6 @@
 import type { Product } from '@/types/product';
 import { formatNTD } from '@/lib/format';
+import { FoodNameLabel } from './FoodNameLabel';
 
 interface Props {
   product: Product;
@@ -26,8 +27,9 @@ export function ProductCard({ product, onTap }: Props) {
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="font-bold truncate">{product.food_name}</p>
-        <p className="text-xs text-gray-500 truncate">{product.restaurant_name}</p>
+        <p className="font-bold truncate">
+          <FoodNameLabel name={product.food_name} />
+        </p>
         {product.description && (
           <p className="text-xs text-gray-400 truncate mt-0.5">{product.description}</p>
         )}

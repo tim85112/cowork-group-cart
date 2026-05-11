@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { HotItem } from '@/hooks/useHotItems';
 import type { Product } from '@/types/product';
 import { formatNTD } from '@/lib/format';
+import { FoodNameLabel } from './FoodNameLabel';
 
 interface Props {
   hotItems: HotItem[];
@@ -48,8 +49,9 @@ function HotCard({ rank, product, onTap }: { rank: number; product: Product; onT
 
       {/* 文字區 */}
       <div className="p-2 pr-8">
-        <p className="text-xs font-bold leading-tight line-clamp-2">{product.food_name}</p>
-        <p className="text-[10px] text-gray-500 truncate mt-0.5">{product.restaurant_name}</p>
+        <p className="text-xs font-bold leading-tight line-clamp-2">
+          <FoodNameLabel name={product.food_name} />
+        </p>
         <p className="text-primary font-bold text-xs mt-1">{formatNTD(product.price)}</p>
       </div>
 

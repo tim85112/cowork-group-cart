@@ -1,5 +1,6 @@
 import type { CartItemRow } from '@/types/db';
 import { formatNTD } from '@/lib/format';
+import { FoodNameLabel } from './FoodNameLabel';
 
 interface Props {
   userName: string;
@@ -30,7 +31,8 @@ export function MemberSection({ userName, isOwner, items, onRemove }: Props) {
             <li key={it.id} className="flex items-center justify-between gap-2 text-sm">
               <div className="min-w-0 flex-1">
                 <p className="truncate">
-                  {it.food_name} ×{it.quantity}
+                  <FoodNameLabel name={it.food_name} />
+                  <span className="ml-1">×{it.quantity}</span>
                 </p>
                 {spec && <p className="text-xs text-gray-400 truncate">{spec}</p>}
               </div>

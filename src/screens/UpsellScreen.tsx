@@ -3,6 +3,7 @@ import { useGroupStore, selectSoloTotal } from '@/store/useGroupStore';
 import { useProducts } from '@/hooks/useProducts';
 import { env } from '@/lib/env';
 import { formatNTD } from '@/lib/format';
+import { FoodNameLabel } from '@/components/FoodNameLabel';
 import { ItemModal } from './ItemModal';
 import type { Product } from '@/types/product';
 
@@ -116,22 +117,27 @@ function UpsellCard({ product, qty, onTap }: CardProps) {
     <button
       type="button"
       onClick={onTap}
-      className="relative bg-white rounded-xl border border-cream p-2 text-left active:scale-[0.98] transition-transform shadow-sm"
+      className="relative bg-white rounded-xl border border-cream p-2 text-left active:scale-[0.98] transition-transform shadow-sm flex flex-col"
       style={{ touchAction: 'manipulation' }}
     >
-      {product.image_url && (
-        <img
-          src={product.image_url}
-          alt={product.food_name}
-          className="w-full aspect-square object-cover rounded-lg mb-1.5"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
-        />
-      )}
+      {/* 固定的圖片區塊：有圖顯示圖、沒圖顯示佔位，讓所有卡片視覺對齊 */}
+      <div className="w-full aspect-square rounded-lg mb-1.5 overflow-hidden bg-cream/40 flex items-center justify-center">
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={product.food_name}
+            className="w-full h-full object-cover"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+        ) : (
+          <span className="text-4xl text-gray-300" aria-hidden="true">🍱</span>
+        )}
+      </div>
       <p
         className="text-sm font-medium leading-tight line-clamp-2 min-h-[2.5rem]"
         title={product.food_name}
       >
-        {product.food_name}
+        <FoodNameLabel name={product.food_name} />
       </p>
       <div className="flex items-center justify-between mt-1.5">
         <span className="text-sm text-primary font-bold">{formatNTD(product.price)}</span>

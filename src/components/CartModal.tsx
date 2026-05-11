@@ -1,5 +1,6 @@
 import { useGroupStore, selectSoloTotal } from '@/store/useGroupStore';
 import { formatNTD } from '@/lib/format';
+import { FoodNameLabel } from './FoodNameLabel';
 
 interface Props {
   onClose: () => void;
@@ -49,7 +50,9 @@ export function CartModal({ onClose, onCheckout }: Props) {
               <div key={item.id} className="flex flex-col gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-base">{item.food_name}</p>
+                    <p className="font-bold text-base">
+                      <FoodNameLabel name={item.food_name} />
+                    </p>
                     {spec && <p className="text-sm text-gray-500">{spec}</p>}
                     <p className="text-sm text-gray-400 mt-0.5">{formatNTD(item.unit_price)}</p>
                   </div>

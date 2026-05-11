@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useGroupStore } from '@/store/useGroupStore';
 import { QtyStepper } from '@/components/QtyStepper';
 import { SpecRadioGroup, parseSpecOptions, parseSpecLabel } from '@/components/SpecRadioGroup';
+import { FoodNameLabel } from '@/components/FoodNameLabel';
 import { formatNTD } from '@/lib/format';
 import type { Product } from '@/types/product';
 
@@ -81,12 +82,13 @@ export function ItemModal({ product, onClose }: Props) {
     }
   }
 
-  // 商品名稱 + 餐廳 + 描述 + 單價 區塊
+  // 商品名稱 + 描述 + 單價 區塊（餐廳名已含於 food_name 之【】，由 FoodNameLabel 處理）
   const titleBlock = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-lg font-bold">{product.food_name}</h2>
-        <p className="text-xs text-gray-500">{product.restaurant_name}</p>
+        <h2 className="text-lg font-bold">
+          <FoodNameLabel name={product.food_name} />
+        </h2>
         {product.description && (
           <p className="text-sm text-gray-500 mt-1">{product.description}</p>
         )}
