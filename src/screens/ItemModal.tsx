@@ -18,6 +18,7 @@ export function ItemModal({ product, onClose }: Props) {
   const soloMode = useGroupStore((s) => s.soloMode);
   const addSoloItem = useGroupStore((s) => s.addSoloItem);
   const setError = useGroupStore((s) => s.setError);
+  const setGroup = useGroupStore((s) => s.setGroup);
 
   const opts1 = parseSpecOptions(product.spec1);
   const opts2 = parseSpecOptions(product.spec2);
@@ -57,7 +58,8 @@ export function ItemModal({ product, onClose }: Props) {
 
     if (!profile || !group) return;
     if (group.status !== 'open') {
-      setError('團購已收單，無法再加品項');
+      setError('此購物車已收單～無法再新增！');
+      onClose();
       return;
     }
     setSubmitting(true);
@@ -73,7 +75,20 @@ export function ItemModal({ product, onClose }: Props) {
         unit_price: unitPrice,
         product_url: product.product_url || null
       });
-      if (error) throw error;
+      if (error) {
+        // RLS 擋下來 = group 已收單（本機 status 可能還是 stale 的 'open'）
+        const closedByRls =
+          error.code === '42501' ||
+          /row-level security/i.test(error.message ?? '');
+        if (closedByRls) {
+          setError('此購物車已收單～無法再新增！');
+          // 同步本地狀態，避免之後再撞
+          setGroup({ ...group, status: 'closed' });
+          onClose();
+          return;
+        }
+        throw error;
+      }
       onClose();
     } catch (e) {
       setError((e as Error).message || '加入購物車失敗');
