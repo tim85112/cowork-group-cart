@@ -11,6 +11,7 @@ import { useHotItems } from '@/hooks/useHotItems';
 import { useRealtimeCart } from '@/hooks/useRealtimeCart';
 import { useCountdown } from '@/hooks/useCountdown';
 import { env } from '@/lib/env';
+import liff from '@line/liff';
 import { BrandHeader } from '@/components/BrandHeader';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { SearchBar } from '@/components/SearchBar';
@@ -113,6 +114,25 @@ export function Menu() {
           <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={setTappedProduct} />
         ))}
       </main>
+
+      <div className="text-xs text-gray-400 text-center py-6 px-4">
+        <a
+          href="/policies.html"
+          onClick={(e) => {
+            if (liff.isInClient()) {
+              e.preventDefault();
+              liff.openWindow({
+                url: `${window.location.origin}/policies.html`,
+                external: false,
+              });
+            }
+          }}
+          className="underline"
+        >
+          服務條款 ・ 隱私權 ・ 客服聯絡
+        </a>
+        <div className="mt-1">© 商辦駝獸（籌備處）</div>
+      </div>
 
       <BottomActionBar
         itemCount={displayCount}
