@@ -21,11 +21,10 @@ export function CreateGroup() {
 
   function applySavedInfo() {
     const saved = loadSavedMemberInfo();
-    if (!saved || (!saved.name && !saved.phone)) {
+    if (!saved || (!saved.phone && saved.taxId === undefined)) {
       setError('沒有可帶入的資料。先用個人版下過一次單之後再回來，就能秒填。');
       return;
     }
-    if (saved.name) setName(saved.name);
     if (saved.phone) setPhone(saved.phone);
     if (saved.taxId !== undefined) setTaxId(saved.taxId);
   }
