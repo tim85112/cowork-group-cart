@@ -1,5 +1,6 @@
 import { env } from './env';
 import { normalizeImageUrl } from './imageUrl';
+import { isInClient } from './liff';
 import type { Product } from '@/types/product';
 
 interface CreateGroupPayload {
@@ -106,8 +107,11 @@ export const api = {
   },
   notifyGroupConfirmed(payload: ConfirmGroupPayload) {
     const liff_url = `https://liff.line.me/${env.liffId}?groupId=${payload.group_id}`;
+    // sent_from：判斷 LIFF 端是否已用 liff.sendMessages 發 Flex。
+    // 'lineApp' → LIFF 自己會發，n8n 不再 Push；'browser' → 桌機，n8n 補 Push
+    const sent_from: 'lineApp' | 'browser' = isInClient() ? 'lineApp' : 'browser';
     // 不再送 ok_to_run；n8n「Dry-run validator」會根據 cart_items + recipient 自己 set
-    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url });
+    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url, sent_from });
   },
   notifyIndividualConfirmed(payload: IndividualConfirmPayload) {
     // n8n「驗證 body」要求 order_summary 必須是陣列；個人散單就是一個成員，模擬同樣結構
@@ -124,9 +128,11 @@ export const api = {
         }))
       }
     ];
+    const sent_from: 'lineApp' | 'browser' = isInClient() ? 'lineApp' : 'browser';
     return postJson<{ ok: boolean }>('group-cart/confirmed', {
       ...payload,
-      order_summary
+      order_summary,
+      sent_from
       // 不需要送 ok_to_run，n8n「Dry-run validator」會根據 cart_items + recipient 自己 set
     });
   },
