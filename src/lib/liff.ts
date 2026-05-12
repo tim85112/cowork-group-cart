@@ -78,7 +78,11 @@ export async function sendOrderFlex(
   }>
 ): Promise<void> {
   await initLiff();
-  if (!liff.isInClient()) throw new Error('liff.isInClient()=false，請從 LINE app 內開啟 LIFF。');
+  if (!liff.isInClient()) {
+    // 桌機 / 外部瀏覽器測試環境：跳過 LINE chat 訊息，主訂單流程已寫入 Supabase + 觸發 n8n
+    console.warn('[sendOrderFlex] liff.isInClient()=false，已跳過 LINE chat flex（桌機測試環境）');
+    return;
+  }
 
   const fmt = (n: number) => 'NT$ ' + n.toLocaleString('en-US');
 
@@ -140,7 +144,10 @@ export async function sendSoloOrderFlex(
   }>
 ): Promise<void> {
   await initLiff();
-  if (!liff.isInClient()) throw new Error('liff.isInClient()=false，請從 LINE app 內開啟 LIFF。');
+  if (!liff.isInClient()) {
+    console.warn('[sendSoloOrderFlex] liff.isInClient()=false，已跳過 LINE chat flex（桌機測試環境）');
+    return;
+  }
 
   const fmt = (n: number) => 'NT$ ' + n.toLocaleString('en-US');
 
@@ -251,6 +258,10 @@ export async function sendSoloOrderFlex(
 
 export async function closeWindow(): Promise<void> {
   await initLiff();
+  if (!liff.isInClient()) {
+    console.warn('[closeWindow] liff.isInClient()=false，桌機測試環境不關閉視窗');
+    return;
+  }
   liff.closeWindow();
 }
 
