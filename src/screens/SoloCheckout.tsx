@@ -3,7 +3,8 @@ import { nanoid } from 'nanoid';
 import { useGroupStore, selectSoloTotal } from '@/store/useGroupStore';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
-import { closeWindow, sendSoloOrderFlex } from '@/lib/liff';
+import { closeWindow, sendSoloOrderFlex, isInClient } from '@/lib/liff';
+import { DesktopSuccessModal } from '@/components/DesktopSuccessModal';
 import { formatNTD, getSessionDate } from '@/lib/format';
 import { env } from '@/lib/env';
 import { loadSavedMemberInfo, saveMemberInfo, type SavedMemberInfo } from '@/lib/memberInfo';
@@ -42,6 +43,7 @@ export function SoloCheckout() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [savedInfo, setSavedInfo] = useState<SavedMemberInfo | null>(null);
+  const [showDesktopSuccess, setShowDesktopSuccess] = useState(false);
 
   useEffect(() => {
     if (!name && profile?.displayName) setName(profile.displayName);
@@ -200,7 +202,11 @@ export function SoloCheckout() {
         taxId: trimmedTaxId ?? ''
       });
       clearSoloCart();
-      await closeWindow();
+      if (isInClient()) {
+        await closeWindow();
+      } else {
+        setShowDesktopSuccess(true);
+      }
     } catch (e) {
       const msg = (e as Error).message || '送出訂單失敗';
       setError(`[${step}] ${msg}`);
@@ -340,6 +346,8 @@ export function SoloCheckout() {
           onConfirm={handleSubmit}
         />
       )}
+
+      {showDesktopSuccess && <DesktopSuccessModal />}
     </div>
   );
 }

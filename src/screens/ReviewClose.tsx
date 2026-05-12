@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useGroupStore, selectGroupTotal } from '@/store/useGroupStore';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
-import { closeWindow, sendOrderFlex } from '@/lib/liff';
+import { closeWindow, sendOrderFlex, isInClient } from '@/lib/liff';
 import { MemberSection } from '@/components/MemberSection';
+import { DesktopSuccessModal } from '@/components/DesktopSuccessModal';
 import { formatNTD, getSessionDate } from '@/lib/format';
 import type { CartItemRow } from '@/types/db';
 
@@ -21,6 +22,7 @@ export function ReviewClose() {
   const setGroup = useGroupStore((s) => s.setGroup);
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Pay_ApplePay' | 'Pay_GooglePay' | 'Pay_CREDIT'>('Pay_ApplePay');
+  const [showDesktopSuccess, setShowDesktopSuccess] = useState(false);
 
   const PAYMENT_OPTIONS = [
     { value: 'Pay_ApplePay' as const, label: 'Apple Pay' },
@@ -150,7 +152,12 @@ export function ReviewClose() {
 
       await sendOrderFlex(total, String(pickupNum ?? '?'), members);
 
-      await closeWindow();
+      if (isInClient()) {
+        await closeWindow();
+      } else {
+        // 桌機 / 外部瀏覽器：沒 LINE chat 可關閉，跳浮動提醒
+        setShowDesktopSuccess(true);
+      }
     } catch (e) {
       setError((e as Error).message || '確認訂單失敗');
       setSubmitting(false);
@@ -211,6 +218,8 @@ export function ReviewClose() {
           </button>
         </div>
       </footer>
+
+      {showDesktopSuccess && <DesktopSuccessModal />}
     </div>
   );
 }
