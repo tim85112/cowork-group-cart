@@ -26,6 +26,7 @@ interface ConfirmGroupPayload {
   group_id: string;
   owner_user_id: string;
   total_amount: number;
+  pickup_number?: number | null;
   order_summary: Array<{
     user_name: string;
     is_owner: boolean;
@@ -46,6 +47,7 @@ interface IndividualConfirmPayload {
   order_type: 'solo';
   owner_user_id: string;
   total_amount: number;
+  pickup_number?: number | null;
   cart_items: CartItemSummary[];
   recipient: {
     name: string;
@@ -111,7 +113,12 @@ export const api = {
     // 'lineApp' → LIFF 自己會發，n8n 不再 Push；'browser' → 桌機，n8n 補 Push
     const sent_from: 'lineApp' | 'browser' = isInClient() ? 'lineApp' : 'browser';
     // 不再送 ok_to_run；n8n「Dry-run validator」會根據 cart_items + recipient 自己 set
-    return postJson<{ ok: boolean }>('group-cart/confirmed', { ...payload, liff_url, sent_from });
+    return postJson<{ ok: boolean }>('group-cart/confirmed', {
+      ...payload,
+      liff_url,
+      sent_from,
+      order_type: 'group'
+    });
   },
   notifyIndividualConfirmed(payload: IndividualConfirmPayload) {
     // n8n「驗證 body」要求 order_summary 必須是陣列；個人散單就是一個成員，模擬同樣結構

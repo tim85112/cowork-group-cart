@@ -140,6 +140,7 @@ export function ReviewClose() {
         group_id: group.id,
         owner_user_id: group.owner_user_id,
         total_amount: total,
+        pickup_number: pickupNum ?? null,
         order_summary,
         cart_items,
         recipient: {

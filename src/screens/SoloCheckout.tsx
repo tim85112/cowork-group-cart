@@ -162,6 +162,7 @@ export function SoloCheckout() {
         order_type: 'solo',
         owner_user_id: profile.userId,
         total_amount: total,
+        pickup_number: pickupNum ?? null,
         cart_items: soloItems.map((i) => ({
           food_name: i.food_name,
           spec1: i.spec1,
