@@ -50,9 +50,15 @@ create policy groups_update on groups for update using (true)
 
 drop policy if exists items_read   on cart_items;
 drop policy if exists items_insert on cart_items;
+drop policy if exists items_update on cart_items;
 drop policy if exists items_delete on cart_items;
 create policy items_read   on cart_items for select using (true);
 create policy items_insert on cart_items for insert with check (
+  exists (select 1 from groups g where g.id = group_id and g.status = 'open')
+);
+create policy items_update on cart_items for update using (
+  exists (select 1 from groups g where g.id = group_id and g.status = 'open')
+) with check (
   exists (select 1 from groups g where g.id = group_id and g.status = 'open')
 );
 create policy items_delete on cart_items for delete using (

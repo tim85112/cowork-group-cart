@@ -17,6 +17,7 @@ export function CartDrawer({ onClose, onCloseGroup }: Props) {
   const total = useGroupStore(selectGroupTotal);
   const removeItem = useGroupStore((s) => s.removeItem);
   const upsertItem = useGroupStore((s) => s.upsertItem);
+  const setError = useGroupStore((s) => s.setError);
 
   if (!group || !profile) return null;
 
@@ -56,7 +57,11 @@ export function CartDrawer({ onClose, onCloseGroup }: Props) {
         .delete()
         .eq('id', item.id)
         .eq('user_id', myUserId);
-      if (!error) removeItem(item.id);
+      if (error) {
+        setError(`移除失敗：${error.message}`);
+        return;
+      }
+      removeItem(item.id);
       return;
     }
     const { data, error } = await supabase
@@ -66,7 +71,12 @@ export function CartDrawer({ onClose, onCloseGroup }: Props) {
       .eq('user_id', myUserId)
       .select()
       .single();
-    if (!error && data) upsertItem(data as CartItemRow);
+    if (error) {
+      // RLS 擋到 / 找不到列 → PGRST116。提示使用者跑 supabase/schema.sql 補 items_update policy
+      setError(`數量更新失敗：${error.message}`);
+      return;
+    }
+    if (data) upsertItem(data as CartItemRow);
   }
 
   return (

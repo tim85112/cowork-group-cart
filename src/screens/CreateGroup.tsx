@@ -124,7 +124,7 @@ export function CreateGroup() {
           <p className="text-sm text-gray-500 mb-6">輕鬆揪團，每天省下 30 分鐘的訂餐時間！</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-bold">揪團者姓名</span>
                 <button
                   type="button"
