@@ -38,6 +38,8 @@ interface ConfirmGroupPayload {
     name: string;
     phone: string;
     tax_id?: string | null;
+    notes?: string | null;
+    want_receipt?: boolean;
   };
   payment_method?: string;
 }

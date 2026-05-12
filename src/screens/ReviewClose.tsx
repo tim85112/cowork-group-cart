@@ -8,6 +8,8 @@ import { DesktopSuccessModal } from '@/components/DesktopSuccessModal';
 import { formatNTD, getSessionDate } from '@/lib/format';
 import type { CartItemRow } from '@/types/db';
 
+const NOTES_MAX = 50;
+
 function buildDisplayName(food: string, spec1: string | null, spec2: string | null): string {
   const spec = [spec1, spec2].filter(Boolean).join(', ');
   return spec ? `${food}（${spec}）` : food;
@@ -22,6 +24,8 @@ export function ReviewClose() {
   const setGroup = useGroupStore((s) => s.setGroup);
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Pay_ApplePay' | 'Pay_GooglePay' | 'Pay_CREDIT'>('Pay_ApplePay');
+  const [notes, setNotes] = useState('');
+  const [wantReceipt, setWantReceipt] = useState(false);
   const [showDesktopSuccess, setShowDesktopSuccess] = useState(false);
 
   const PAYMENT_OPTIONS = [
@@ -48,6 +52,7 @@ export function ReviewClose() {
   async function handleConfirm() {
     if (!group) return;
     setSubmitting(true);
+    const trimmedNotes = notes.trim().slice(0, NOTES_MAX);
     try {
       const order_summary = members.map((m) => ({
         user_name: m.user_name,
@@ -108,8 +113,8 @@ export function ReviewClose() {
           customer_name: group.owner_name,
           customer_phone: group.owner_phone,
           customer_email: null,
-          customer_notes: null,
-          want_receipt: false,
+          customer_notes: trimmedNotes || null,
+          want_receipt: wantReceipt,
           tax_id: group.tax_id,
           payment_method: paymentMethod,
           items_subtotal: total,
@@ -146,7 +151,9 @@ export function ReviewClose() {
         recipient: {
           name: group.owner_name,
           phone: group.owner_phone,
-          tax_id: group.tax_id ?? null
+          tax_id: group.tax_id ?? null,
+          notes: trimmedNotes || null,
+          want_receipt: wantReceipt
         },
         payment_method: paymentMethod,
       });
@@ -181,6 +188,35 @@ export function ReviewClose() {
             items={m.items}
           />
         ))}
+
+        <div className="bg-white rounded-xl p-3 border border-cream">
+          <label className="block text-base font-bold mb-1.5">
+            備註（最多 {NOTES_MAX} 字）
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
+            rows={3}
+            maxLength={NOTES_MAX}
+            disabled={submitting}
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-base resize-none"
+            placeholder="如有特殊需求請填寫（會帶到 1shop 訂單備註）"
+          />
+          <p className="text-xs text-gray-400 text-right mt-0.5">
+            {notes.length} / {NOTES_MAX}
+          </p>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer bg-white rounded-xl px-3 py-2.5 border border-cream">
+          <input
+            type="checkbox"
+            checked={wantReceipt}
+            onChange={(e) => setWantReceipt(e.target.checked)}
+            disabled={submitting}
+            className="w-5 h-5"
+          />
+          <span className="text-base font-bold">索取收據</span>
+        </label>
       </main>
 
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t border-cream px-4 py-3">
