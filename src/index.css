@@ -24,6 +24,24 @@ body {
   overscroll-behavior-y: contain;
 }
 
+@media (min-width: 28rem) {
+  .fixed.inset-x-0 {
+    max-width: 28rem;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+  }
+  .fixed.inset-x-4 {
+    max-width: calc(28rem - 2rem);
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+  }
+  .fixed.right-4 {
+    right: max(1rem, calc((100vw - 28rem) / 2 + 1rem)) !important;
+  }
+}
+
 @layer components {
   .btn-primary {
     @apply bg-primary text-white rounded-2xl px-4 py-3 font-bold shadow-md

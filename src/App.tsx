@@ -54,27 +54,29 @@ export function App() {
   }, [setGroup, setScreen, setLoading, setError, setSoloMode]);
 
   return (
-    <div className="min-h-full bg-cream">
-      {loading && !group && (
-        <div className="min-h-screen flex items-center justify-center text-gray-400">
-          載入中…
-        </div>
-      )}
-      {!loading && screen === 'create' && <CreateGroup />}
-      {!loading && screen === 'share' && <ShareGroup />}
-      {!loading && screen === 'menu' && (soloMode || group) && <Menu />}
-      {!loading && screen === 'review' && group && <ReviewClose />}
-      {!loading && screen === 'upsell' && (soloMode || group) && <UpsellScreen />}
-      {!loading && screen === 'solo-checkout' && soloMode && <SoloCheckout />}
+    <div className="min-h-full bg-gray-100">
+      <div className="max-w-md mx-auto min-h-screen bg-cream sm:shadow-2xl relative">
+        {loading && !group && (
+          <div className="min-h-screen flex items-center justify-center text-gray-400">
+            載入中…
+          </div>
+        )}
+        {!loading && screen === 'create' && <CreateGroup />}
+        {!loading && screen === 'share' && <ShareGroup />}
+        {!loading && screen === 'menu' && (soloMode || group) && <Menu />}
+        {!loading && screen === 'review' && group && <ReviewClose />}
+        {!loading && screen === 'upsell' && (soloMode || group) && <UpsellScreen />}
+        {!loading && screen === 'solo-checkout' && soloMode && <SoloCheckout />}
 
-      {error && (
-        <div
-          className="fixed bottom-4 inset-x-4 z-50 bg-red-600 text-white text-sm rounded-xl px-4 py-3 shadow-lg cursor-pointer"
-          onClick={() => setError(null)}
-        >
-          {error}
-        </div>
-      )}
+        {error && (
+          <div
+            className="fixed bottom-4 inset-x-4 z-50 bg-red-600 text-white text-sm rounded-xl px-4 py-3 shadow-lg cursor-pointer"
+            onClick={() => setError(null)}
+          >
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
