@@ -227,7 +227,7 @@ export function SoloCheckout() {
           <button
             type="button"
             onClick={applySavedMemberInfo}
-            className="w-full flex items-center justify-center px-3 py-2.5 rounded-lg border-2 border-primary text-primary bg-white text-base font-bold active:bg-primary/5"
+            className="btn-primary w-full"
           >
             帶入會員資料
           </button>
