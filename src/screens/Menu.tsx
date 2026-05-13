@@ -1,4 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+const PAGE_SIZE = 10;
+
+function buildPageList(page: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (page <= 4) return [1, 2, 3, 4, 5, '…', total];
+  if (page >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
+  return [1, '…', page - 1, page, page + 1, '…', total];
+}
 import {
   useGroupStore,
   selectIsHost,
@@ -55,6 +64,17 @@ export function Menu() {
     });
   }, [products, activeCat, search]);
 
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  );
+  const pageList = useMemo(() => buildPageList(page, totalPages), [page, totalPages]);
+
+  useEffect(() => { setPage(1); }, [activeCat, search]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
   const deadline = group ? new Date(group.created_at).getTime() + 24 * 3600 * 1000 : null;
   const countdown = useCountdown(deadline);
   const createdAt = group ? new Date(group.created_at).toLocaleString('zh-Hant', { hour12: false }) : '';
@@ -110,10 +130,49 @@ export function Menu() {
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center text-gray-400 py-8">沒有符合的餐點</div>
         )}
-        {filtered.map((p) => (
+        {pageItems.map((p) => (
           <ProductCard key={p.food_name + p.restaurant_name} product={p} onTap={setTappedProduct} />
         ))}
       </main>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 py-4 flex-wrap">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="w-9 h-9 rounded-full text-gray-600 disabled:opacity-30 active:bg-gray-100"
+            aria-label="上一頁"
+          >
+            ←
+          </button>
+          {pageList.map((p, i) =>
+            p === '…' ? (
+              <span key={`e${i}`} className="px-1 text-gray-400">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`min-w-[36px] h-9 px-2 rounded-full text-sm ${
+                  p === page
+                    ? 'bg-primary text-white font-bold'
+                    : 'text-gray-600 active:bg-gray-100'
+                }`}
+                aria-current={p === page ? 'page' : undefined}
+              >
+                {p}
+              </button>
+            )
+          )}
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="w-9 h-9 rounded-full text-gray-600 disabled:opacity-30 active:bg-gray-100"
+            aria-label="下一頁"
+          >
+            →
+          </button>
+        </div>
+      )}
 
       <div className="text-xs text-gray-400 text-center py-6 px-4">
         <a
@@ -131,7 +190,9 @@ export function Menu() {
         >
           服務條款 ・ 隱私權 ・ 客服聯絡
         </a>
-        <div className="mt-1">© 商辦駝獸（籌備處）</div>
+        <div className="mt-1">© 商辦駝獸</div>
+        <div>駝獸商行 / 60137687</div>
+        <div>本系統由 商辦駝獸 維護</div>
       </div>
 
       <BottomActionBar
